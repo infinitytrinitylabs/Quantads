@@ -1,5 +1,3 @@
-import { AudienceSignal } from "../bidding/BiddingEngine";
-
 export interface ContextualVector {
   platform: string;
   activityContext: string;
@@ -8,6 +6,13 @@ export interface ContextualVector {
     curiosity?: number;
     purchaseIntent?: number;
   };
+}
+
+interface AudienceSignal {
+  verifiedLtv: number;
+  intentScore: number;
+  conversionRate: number;
+  recencyMultiplier?: number;
 }
 
 export interface ContextualAdCandidate {
