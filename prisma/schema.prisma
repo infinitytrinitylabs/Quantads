@@ -1,0 +1,83 @@
+// Quantads – Prisma/PostgreSQL schema
+// Run: npx prisma migrate dev
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Advertiser {
+  id          String     @id @default(uuid())
+  name        String
+  email       String     @unique
+  walletAddress String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  campaigns   Campaign[]
+}
+
+model Campaign {
+  id           String       @id @default(uuid())
+  advertiser   Advertiser   @relation(fields: [advertiserId], references: [id])
+  advertiserId String
+  title        String
+  description  String?
+  outcomeType  String       // e.g. "booked-meeting", "app-install", "purchase"
+  unitPrice    Float
+  budget       Float
+  spentBudget  Float        @default(0)
+  status       CampaignStatus @default(ACTIVE)
+  startAt      DateTime?
+  endAt        DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  impressions  Impression[]
+  clicks       Click[]
+  contextualVectors ContextualVector[]
+}
+
+enum CampaignStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+model Impression {
+  id           String    @id @default(uuid())
+  campaign     Campaign  @relation(fields: [campaignId], references: [id])
+  campaignId   String
+  userId       String    // opaque Quantmail user ID – no PII stored
+  platform     String    // "quanttube" | "quantedits" | "quantchill" | ...
+  adFormat     String    // "contextual-story" | "product-placement" | "native-card"
+  occurredAt   DateTime  @default(now())
+  clicks       Click[]
+}
+
+model Click {
+  id           String     @id @default(uuid())
+  impression   Impression @relation(fields: [impressionId], references: [id])
+  impressionId String
+  campaign     Campaign   @relation(fields: [campaignId], references: [id])
+  campaignId   String
+  userId       String
+  occurredAt   DateTime   @default(now())
+  outcome      String?    // fulfilled outcome type once tracked
+}
+
+// ContextualVector stores the user's current mood/activity state.
+// Only contextual signals are stored – no PII.
+model ContextualVector {
+  id              String    @id @default(uuid())
+  campaign        Campaign  @relation(fields: [campaignId], references: [id])
+  campaignId      String
+  platform        String    // e.g. "quanttube"
+  activityContext String    // e.g. "watching-travel-vlog"
+  moodSignals     Json      // { energyLevel, curiosity, purchaseIntent }
+  embeddingHash   String    // hash of the semantic embedding – no raw text
+  createdAt       DateTime  @default(now())
+}
