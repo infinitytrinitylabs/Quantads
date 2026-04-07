@@ -53,7 +53,8 @@ export class AuctionEngine {
     );
     const priorityBoost = clamp(request.priorityBoost ?? 1, 0.8, 1.4);
     const expectedRevenuePerOutcome = request.expectedRevenuePerOutcome ?? request.baseOutcomePrice * 2;
-    const marginMultiplier = clamp(expectedRevenuePerOutcome / bidResult.finalBid, 0.8, 3);
+    const safeFinalBid = Math.max(bidResult.finalBid, 0.01);
+    const marginMultiplier = clamp(expectedRevenuePerOutcome / safeFinalBid, 0.8, 3);
     const auctionScore = round(
       bidResult.finalBid *
         bidResult.breakdown.confidenceMultiplier *

@@ -141,7 +141,11 @@ export const handleRoiSummary = withAuth(
     const campaigns = campaignIds.map((id) => {
       const series = generateMockMetrics(id, fromDate, toDate);
       const metrics = aggregateMetrics(series);
-      return { campaignId: id, ...metrics, outcomeMetrics: outcomeMetricsByCampaign[id] };
+      return {
+        campaignId: id,
+        ...metrics,
+        outcomeMetrics: outcomeMetricsByCampaign[id] ?? outcomeStore.getPerformanceSummary(id)
+      };
     });
 
     const overallSpend = Number(campaigns.reduce((s, c) => s + c.spend, 0).toFixed(2));

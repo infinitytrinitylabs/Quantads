@@ -85,7 +85,7 @@ export class OutcomeStore {
     ledger.outcomeValueGenerated = round(ledger.outcomeValueGenerated + report.valueGenerated);
     ledger.deliveryProgress = round(ledger.billableOutcomeCount / ledger.quotedOutcomeCount);
     const spendBase = ledger.settledAmount ?? ledger.quotedAmount;
-    ledger.roas = spendBase > 0 ? round(ledger.outcomeValueGenerated / spendBase) : 0;
+    ledger.roas = this.calculateRoas(ledger.outcomeValueGenerated, spendBase);
 
     return ledger;
   }
@@ -144,11 +144,14 @@ export class OutcomeStore {
     summary.quotedSpend = round(summary.quotedSpend);
     summary.settledSpend = round(summary.settledSpend);
     summary.outcomeValueGenerated = round(summary.outcomeValueGenerated);
-    summary.outcomeBackedRoas =
-      summary.quotedSpend > 0 ? round(summary.outcomeValueGenerated / summary.quotedSpend) : 0;
+    summary.outcomeBackedRoas = this.calculateRoas(summary.outcomeValueGenerated, summary.quotedSpend);
     summary.settlementCoverage =
       summary.quotedSpend > 0 ? round(summary.settledSpend / summary.quotedSpend) : 0;
     return summary;
+  }
+
+  private calculateRoas(valueGenerated: number, spend: number): number {
+    return spend > 0 ? round(valueGenerated / spend) : 0;
   }
 
   private emptySummary(): OutcomePerformanceSummary {
