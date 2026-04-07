@@ -137,10 +137,11 @@ export const handleRoiSummary = withAuth(
     logger.info({ userId: token.sub }, "ROI summary requested");
 
     const campaignIds = ["cmp-travel-gear-001", "cmp-creative-tools-001", "cmp-chill-sounds-001"];
+    const outcomeMetricsByCampaign = outcomeStore.getPerformanceSummaries(campaignIds);
     const campaigns = campaignIds.map((id) => {
       const series = generateMockMetrics(id, fromDate, toDate);
       const metrics = aggregateMetrics(series);
-      return { campaignId: id, ...metrics, outcomeMetrics: outcomeStore.getPerformanceSummary(id) };
+      return { campaignId: id, ...metrics, outcomeMetrics: outcomeMetricsByCampaign[id] };
     });
 
     const overallSpend = Number(campaigns.reduce((s, c) => s + c.spend, 0).toFixed(2));

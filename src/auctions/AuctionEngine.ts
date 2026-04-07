@@ -32,6 +32,7 @@ const round = (value: number): number => Number(value.toFixed(2));
 export class AuctionEngine {
   private readonly biddingEngine = new BiddingEngine();
   private readonly bidsByCampaign = new Map<string, StoredAuctionBid[]>();
+  private readonly bidsByInvoice = new Map<string, StoredAuctionBid>();
 
   constructor(private readonly store: OutcomeStore) {}
 
@@ -45,7 +46,11 @@ export class AuctionEngine {
       riskTolerance: request.riskTolerance
     });
 
-    const reservePrice = round(request.reservePrice ?? request.baseOutcomePrice * 0.9);
+    const reservePrice = round(
+      request.reservePrice ??
+        request.baseOutcomePrice *
+          clamp(request.audience.verifiedLtv / (request.baseOutcomePrice * 4), 1, 1.35)
+    );
     const priorityBoost = clamp(request.priorityBoost ?? 1, 0.8, 1.4);
     const expectedRevenuePerOutcome = request.expectedRevenuePerOutcome ?? request.baseOutcomePrice * 2;
     const marginMultiplier = clamp(expectedRevenuePerOutcome / bidResult.finalBid, 0.8, 3);
@@ -98,6 +103,7 @@ export class AuctionEngine {
     const existing = this.bidsByCampaign.get(campaignId) ?? [];
     existing.push(storedBid);
     this.bidsByCampaign.set(campaignId, existing);
+    this.bidsByInvoice.set(quote.invoiceId, storedBid);
 
     this.store.registerInvoice({
       invoiceId: quote.invoiceId,
@@ -162,9 +168,7 @@ export class AuctionEngine {
   }
 
   hasInvoice(invoiceId: string): boolean {
-    return [...this.bidsByCampaign.values()].some((bids) =>
-      bids.some((bid) => bid.quote.invoiceId === invoiceId)
-    );
+    return this.bidsByInvoice.has(invoiceId);
   }
 
   private getSortedBids(campaignId: string): StoredAuctionBid[] {

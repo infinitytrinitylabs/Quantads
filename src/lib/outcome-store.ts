@@ -94,33 +94,53 @@ export class OutcomeStore {
     const ledgers = [...this.ledgers.values()].filter(
       (ledger) => !campaignId || ledger.campaignId === campaignId
     );
+    return this.summarizeLedgers(ledgers);
+  }
 
-    const summary = ledgers.reduce<OutcomePerformanceSummary>(
-      (acc, ledger) => {
-        acc.invoices += 1;
-        acc.settledInvoices += ledger.paymentStatus === "settled" ? 1 : 0;
-        acc.quotedSpend += ledger.quotedAmount;
-        acc.settledSpend += ledger.settledAmount ?? 0;
-        acc.projectedOutcomes += ledger.quotedOutcomeCount;
-        acc.reportedOutcomes += ledger.reportedOutcomeCount;
-        acc.billableOutcomes += ledger.billableOutcomeCount;
-        acc.outcomeValueGenerated += ledger.outcomeValueGenerated;
-        return acc;
-      },
-      {
-        invoices: 0,
-        settledInvoices: 0,
-        quotedSpend: 0,
-        settledSpend: 0,
-        projectedOutcomes: 0,
-        reportedOutcomes: 0,
-        billableOutcomes: 0,
-        outcomeValueGenerated: 0,
-        outcomeBackedRoas: 0,
-        settlementCoverage: 0
+  getPerformanceSummaries(campaignIds: string[]): Record<string, OutcomePerformanceSummary> {
+    const summaries = Object.fromEntries(
+      campaignIds.map((campaignId) => [campaignId, this.emptySummary()])
+    ) as Record<string, OutcomePerformanceSummary>;
+
+    for (const ledger of this.ledgers.values()) {
+      const summary = summaries[ledger.campaignId];
+
+      if (!summary) {
+        continue;
       }
-    );
 
+      this.accumulate(summary, ledger);
+    }
+
+    for (const campaignId of campaignIds) {
+      summaries[campaignId] = this.finalizeSummary(summaries[campaignId]);
+    }
+
+    return summaries;
+  }
+
+  private summarizeLedgers(ledgers: InvoiceOutcomeLedger[]): OutcomePerformanceSummary {
+    const summary = this.emptySummary();
+
+    for (const ledger of ledgers) {
+      this.accumulate(summary, ledger);
+    }
+
+    return this.finalizeSummary(summary);
+  }
+
+  private accumulate(summary: OutcomePerformanceSummary, ledger: InvoiceOutcomeLedger): void {
+    summary.invoices += 1;
+    summary.settledInvoices += ledger.paymentStatus === "settled" ? 1 : 0;
+    summary.quotedSpend += ledger.quotedAmount;
+    summary.settledSpend += ledger.settledAmount ?? 0;
+    summary.projectedOutcomes += ledger.quotedOutcomeCount;
+    summary.reportedOutcomes += ledger.reportedOutcomeCount;
+    summary.billableOutcomes += ledger.billableOutcomeCount;
+    summary.outcomeValueGenerated += ledger.outcomeValueGenerated;
+  }
+
+  private finalizeSummary(summary: OutcomePerformanceSummary): OutcomePerformanceSummary {
     summary.quotedSpend = round(summary.quotedSpend);
     summary.settledSpend = round(summary.settledSpend);
     summary.outcomeValueGenerated = round(summary.outcomeValueGenerated);
@@ -128,8 +148,22 @@ export class OutcomeStore {
       summary.quotedSpend > 0 ? round(summary.outcomeValueGenerated / summary.quotedSpend) : 0;
     summary.settlementCoverage =
       summary.quotedSpend > 0 ? round(summary.settledSpend / summary.quotedSpend) : 0;
-
     return summary;
+  }
+
+  private emptySummary(): OutcomePerformanceSummary {
+    return {
+      invoices: 0,
+      settledInvoices: 0,
+      quotedSpend: 0,
+      settledSpend: 0,
+      projectedOutcomes: 0,
+      reportedOutcomes: 0,
+      billableOutcomes: 0,
+      outcomeValueGenerated: 0,
+      outcomeBackedRoas: 0,
+      settlementCoverage: 0
+    };
   }
 }
 

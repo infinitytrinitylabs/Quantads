@@ -1,9 +1,23 @@
 import { z } from "zod";
 
+const SupportedSettlementCurrencies = new Set([
+  "USDC",
+  "USDT",
+  "DAI",
+  "ETH",
+  "WETH",
+  "BTC",
+  "WBTC"
+]);
+
 const SettlementCurrencySchema = z
   .string()
   .regex(/^[a-zA-Z]{3,5}$/, "currency must be 3-5 alphabetic characters")
-  .transform((value) => value.toUpperCase());
+  .transform((value) => value.toUpperCase())
+  .refine(
+    (value) => SupportedSettlementCurrencies.has(value),
+    "currency must be a supported stablecoin or crypto settlement asset"
+  );
 
 // ── Contextual Ads ────────────────────────────────────────────────────────────
 
