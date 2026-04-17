@@ -165,3 +165,63 @@ export const TwinSimulationRequestSchema = z.object({
     quantchatOpenDelaySeconds: z.number().nonnegative().optional()
   })).min(1)
 });
+
+// ── Campaign Management ───────────────────────────────────────────────────────
+
+export const CampaignTargetingRulesSchema = z.object({
+  ageMin: z.number().int().min(0).max(120).optional(),
+  ageMax: z.number().int().min(0).max(120).optional(),
+  interests: z.array(z.string().min(1)).optional(),
+  attentionThreshold: z.number().min(0).max(1).optional(),
+  geoRadius: z.object({
+    latitude: z.number().min(-90).max(90),
+    longitude: z.number().min(-180).max(180),
+    radiusMeters: z.number().positive()
+  }).optional()
+}).optional().default({});
+
+export const CreativeInputSchema = z.object({
+  url: z.string().url(),
+  format: z.enum(["banner", "video", "native"]),
+  previewUrl: z.string().url().optional()
+});
+
+export const CampaignCreateRequestSchema = z.object({
+  name: z.string().min(1).max(256),
+  budget: z.number().positive(),
+  targetingRules: CampaignTargetingRulesSchema,
+  creatives: z.array(CreativeInputSchema).optional().default([])
+});
+
+export const CampaignUpdateRequestSchema = z.object({
+  name: z.string().min(1).max(256).optional(),
+  budget: z.number().positive().optional(),
+  status: z.enum(["active", "paused"]).optional(),
+  targetingRules: CampaignTargetingRulesSchema
+});
+
+// ── Bid Processing ────────────────────────────────────────────────────────────
+
+export const BidRequestSchema = z.object({
+  campaignId: z.string().min(1),
+  targetUserId: z.string().min(1),
+  baseCpc: z.number().positive(),
+  creativeId: z.string().min(1),
+  advertiserBudget: z.number().positive(),
+  attentionScore: z.number().min(0).max(1).optional()
+});
+
+// ── Tracking ──────────────────────────────────────────────────────────────────
+
+export const ImpressionInputSchema = z.object({
+  adId: z.string().min(1),
+  userId: z.string().min(1),
+  attentionScore: z.number().min(0).max(1),
+  dwellTimeMs: z.number().int().nonnegative()
+});
+
+export const ClickInputSchema = z.object({
+  adId: z.string().min(1),
+  userId: z.string().min(1),
+  timestamp: z.string().datetime().optional()
+});

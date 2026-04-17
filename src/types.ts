@@ -225,6 +225,167 @@ export interface AuctionWinnerResponse {
   leaderboard: AuctionLeaderboardEntry[];
 }
 
+// ── Campaign & Ad Exchange ────────────────────────────────────────────────────
+
+export type CampaignStatus = "active" | "paused" | "depleted" | "deleted";
+
+export interface Creative {
+  id: string;
+  campaignId: string;
+  url: string;
+  format: "banner" | "video" | "native";
+  previewUrl?: string;
+  createdAt: string;
+}
+
+export interface Campaign {
+  id: string;
+  advertiserId: string;
+  name: string;
+  budget: number;
+  totalSpend: number;
+  status: CampaignStatus;
+  targetingRules: CampaignTargetingRules;
+  creatives: Creative[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CampaignTargetingRules {
+  ageMin?: number;
+  ageMax?: number;
+  interests?: string[];
+  attentionThreshold?: number;   // minimum attention score 0–1
+  geoRadius?: { latitude: number; longitude: number; radiusMeters: number };
+}
+
+export interface CampaignCreateRequest {
+  name: string;
+  budget: number;
+  targetingRules: CampaignTargetingRules;
+  creatives?: Array<{ url: string; format: "banner" | "video" | "native"; previewUrl?: string }>;
+}
+
+export interface CampaignUpdateRequest {
+  name?: string;
+  budget?: number;
+  status?: "active" | "paused";
+  targetingRules?: CampaignTargetingRules;
+}
+
+// ── Bid Processing ────────────────────────────────────────────────────────────
+
+export interface BidRequest {
+  campaignId: string;
+  targetUserId: string;
+  baseCpc: number;
+  creativeId: string;
+  advertiserBudget: number;
+  attentionScore?: number;    // 0–1 from BCI pipeline
+}
+
+export interface BidResult {
+  campaignId: string;
+  creativeId: string;
+  winnerId: string | null;
+  winnerCpc: number;          // price winner actually pays (second-price)
+  finalCpc: number;           // adjusted CPC before second-price
+  isWinner: boolean;
+  auctionRank: number;
+  budgetExhausted: boolean;
+}
+
+export interface AuctionSlot {
+  slotId: string;
+  bids: ProcessedBid[];
+  resolvedAt: string;
+  winner: ProcessedBid | null;
+  clearingPrice: number;
+}
+
+export interface ProcessedBid {
+  campaignId: string;
+  creativeId: string;
+  finalCpc: number;
+  attentionScore: number;
+  advertiserId?: string;
+}
+
+// ── Impression & Click Tracking ───────────────────────────────────────────────
+
+export interface Impression {
+  id: string;
+  adId: string;
+  userId: string;
+  attentionScore: number;
+  dwellTimeMs: number;
+  createdAt: string;
+}
+
+export interface Click {
+  id: string;
+  adId: string;
+  userId: string;
+  timestamp: string;
+  impressionId: string;
+  valid: boolean;
+}
+
+// ── Fraud Detection ───────────────────────────────────────────────────────────
+
+export interface FraudFeatures {
+  clickRate: number;          // clicks / impressions ratio
+  avgDwellTime: number;       // ms
+  attentionVariance: number;  // variance of attention scores
+  uniqueIpCount: number;
+  sessionDuration: number;    // ms
+}
+
+export interface FraudAlert {
+  id: string;
+  userId: string;
+  anomalyScore: number;
+  verdict: "clean" | "suspicious" | "blocked";
+  features: FraudFeatures;
+  heuristicFlags: string[];
+  autoRefunded: boolean;
+  createdAt: string;
+}
+
+export interface BotHeuristicInput {
+  userId: string;
+  dwellTimeSamples: number[];
+  mouseMovementSamples: number[];
+  locations: Array<{ latitude: number; longitude: number; timestampMs: number }>;
+  browserFingerprint: {
+    hasWebGL: boolean;
+    hasAudioContext: boolean;
+    userAgent: string;
+    screenResolution?: string;
+  };
+}
+
+// ── Campaign Analytics ────────────────────────────────────────────────────────
+
+export interface CampaignAnalytics {
+  campaignId: string;
+  impressions: number;
+  clicks: number;
+  ctr: number;
+  totalSpend: number;
+  eCpm: number;
+  averageAttentionScore: number;
+  dailyBreakdown: DailyAnalyticsEntry[];
+}
+
+export interface DailyAnalyticsEntry {
+  date: string;
+  impressions: number;
+  clicks: number;
+  spend: number;
+  averageAttentionScore: number;
+}
+
 // ── BCI Attention Tracking ─────────────────────────────────────────────────────
 
 export interface BciAttentionSignal {

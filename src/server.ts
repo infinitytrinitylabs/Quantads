@@ -8,6 +8,13 @@ import { handleAuctionBid, handleAuctionWinner } from "./routes/auctions";
 import { handleCampaignAnalytics, handleRoiSummary } from "./routes/analytics";
 import { handleOutcomeLookup, handleOutcomeReport } from "./routes/outcomes";
 import { handleBciIngest, handleBciAggregated } from "./routes/bci";
+import {
+  handleCreateCampaign,
+  handleListCampaigns,
+  handleUpdateCampaign,
+  handleDeleteCampaign,
+  handleCampaignAdAnalytics
+} from "./routes/campaigns";
 import { logger } from "./lib/logger";
 import {
   OutcomeBidRequestSchema,
@@ -53,6 +60,38 @@ export const app = createServer(async (request, response) => {
     // Contextual ad serving – Quantmail JWT required (biometric SSO)
     if (request.method === "POST" && request.url === "/api/v1/ads/contextual") {
       await handleContextualAds(request, response);
+      return;
+    }
+
+    // ── Campaign Management ──────────────────────────────────────────────────
+
+    // POST /api/v1/campaigns – create campaign
+    if (request.method === "POST" && request.url === "/api/v1/campaigns") {
+      await handleCreateCampaign(request, response);
+      return;
+    }
+
+    // GET /api/v1/campaigns – list campaigns
+    if (request.method === "GET" && request.url === "/api/v1/campaigns") {
+      await handleListCampaigns(request, response);
+      return;
+    }
+
+    // GET /api/v1/campaigns/:id/analytics
+    if (request.method === "GET" && /^\/api\/v1\/campaigns\/[^/]+\/analytics$/.test(request.url ?? "")) {
+      await handleCampaignAdAnalytics(request, response);
+      return;
+    }
+
+    // PATCH /api/v1/campaigns/:id
+    if (request.method === "PATCH" && /^\/api\/v1\/campaigns\/[^/]+$/.test(request.url ?? "")) {
+      await handleUpdateCampaign(request, response);
+      return;
+    }
+
+    // DELETE /api/v1/campaigns/:id
+    if (request.method === "DELETE" && /^\/api\/v1\/campaigns\/[^/]+$/.test(request.url ?? "")) {
+      await handleDeleteCampaign(request, response);
       return;
     }
 
