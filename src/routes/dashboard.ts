@@ -55,8 +55,13 @@ export const handleDashboardStream = withAuth(async (req: IncomingMessage, res: 
   const snapshotInterval = setInterval(() => {
     try {
       sendEvent("snapshot", buildSnapshot());
-    } catch {
-      // client disconnected; cleanup handled below
+    } catch (err) {
+      // Ignore write errors from disconnected clients; res.destroyed guards the rest
+      if (res.destroyed) {
+        clearInterval(snapshotInterval);
+      } else {
+        logger.warn({ err: err instanceof Error ? err.message : String(err) }, "dashboard snapshot error");
+      }
     }
   }, 5_000);
 
@@ -65,7 +70,10 @@ export const handleDashboardStream = withAuth(async (req: IncomingMessage, res: 
     try {
       res.write(": heartbeat\n\n");
     } catch {
-      // client disconnected
+      // Client disconnected; cleanup will happen on the 'close' event
+      if (res.destroyed) {
+        clearInterval(heartbeatInterval);
+      }
     }
   }, SSE_HEARTBEAT_MS);
 

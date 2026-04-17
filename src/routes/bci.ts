@@ -84,6 +84,14 @@ export const handleBciAggregated = withAuth(async (req: IncomingMessage, res: Se
   }
 
   const userId = decodeURIComponent(match[1]!);
+
+  // Basic sanity check: userId must be a non-empty string of printable characters
+  // with a reasonable length limit to prevent resource exhaustion.
+  if (userId.length === 0 || userId.length > 256 || !/^[\w\-@.]+$/.test(userId)) {
+    sendJson(res, 400, { error: "Invalid userId format" });
+    return;
+  }
+
   const aggregated = attentionStore.getAggregated(userId);
 
   if (!aggregated) {

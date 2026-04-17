@@ -107,7 +107,7 @@ test("FraudDetector: impossible HR delta between consecutive samples flags fraud
     makeSample({ heartRate: 60 }),
     makeSample({ heartRate: 60 }),
     makeSample({ heartRate: 60 }),
-    makeSample({ heartRate: 115 })  // +55 bpm jump
+    makeSample({ heartRate: 115 })  // jump to 115 bpm (+55 delta – physiologically impossible between samples)
   ];
 
   const result = detectFraud(samples);

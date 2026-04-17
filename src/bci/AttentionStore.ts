@@ -58,7 +58,7 @@ function computeAttentionScore(samples: BiometricSample[]): AggregatedAttention 
   const avgHr = sumHr / n;
   const avgNeural = sumNeural / n;
 
-  // Normalise heart rate: resting ~60 bpm, peak engagement ~90+ bpm.
+  // Normalize heart rate: resting ~60 bpm, peak engagement ~90+ bpm.
   // Map [60,90] → [0,1], clamp outside range.
   const hrNorm = Math.min(Math.max((avgHr - 60) / 30, 0), 1);
 

@@ -60,6 +60,7 @@ export class HFBExchange {
   private tail = 0;
   private count = 0;
   private streamCounter = 0;
+  private clearCounter = 0;
 
   private totalSubmitted = 0;
   private totalProcessed = 0;
@@ -128,11 +129,10 @@ export class HFBExchange {
       this.lastClearedSlots.push(slotId);
 
       // Apply attention multiplier to each bid's effective CPC
-      const effective = bids.map((b) => ({
-        bid: b,
-        multiplier: attentionCpcMultiplier(b.attentionScore),
-        effectiveCpc: b.cpcBid * attentionCpcMultiplier(b.attentionScore)
-      }));
+      const effective = bids.map((b) => {
+        const multiplier = attentionCpcMultiplier(b.attentionScore);
+        return { bid: b, multiplier, effectiveCpc: b.cpcBid * multiplier };
+      });
 
       // Sort descending by effectiveCpc
       effective.sort((a, b) => b.effectiveCpc - a.effectiveCpc);
@@ -149,7 +149,7 @@ export class HFBExchange {
           : 0;
 
         cleared.push({
-          streamId: `${Date.now()}-${++this.streamCounter}`,
+          streamId: `${Date.now()}-c${++this.clearCounter}`,
           bidId: bid.bidId,
           advertiserId: bid.advertiserId,
           adSlotId: bid.adSlotId,
