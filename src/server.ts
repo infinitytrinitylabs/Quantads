@@ -42,6 +42,12 @@ import {
   handleAutopilotAudit
 } from "./routes/autopilot";
 import {
+  handleBidWarRoom,
+  handleBidWarSnapshot,
+  handleBidWarSniperMode,
+  handleBidWarStrategyOptimize
+} from "./routes/bid-war";
+import {
   handleCreateCampaign,
   handleListCampaigns,
   handleUpdateCampaign,
@@ -175,6 +181,14 @@ export const app = createServer(async (request, response) => {
       /^\/advertisers\/[^/]+\/exchange-dashboard(?:\?.*)?$/.test(request.url ?? "")
     ) {
       await handleExchangeDashboard(request, response);
+      return;
+    }
+
+    if (
+      request.method === "GET" &&
+      /^\/advertisers\/[^/]+\/bid-war-room(?:\?.*)?$/.test(request.url ?? "")
+    ) {
+      await handleBidWarRoom(request, response);
       return;
     }
 
@@ -325,6 +339,30 @@ export const app = createServer(async (request, response) => {
       /^\/api\/v1\/autopilot\/policies\/[^/]+$/.test(request.url ?? "")
     ) {
       await handleAutopilotGet(request, response);
+      return;
+    }
+
+    if (
+      request.method === "GET" &&
+      /^\/api\/v1\/bid-war\/advertisers\/[^/?]+(?:\?.*)?$/.test(request.url ?? "")
+    ) {
+      await handleBidWarSnapshot(request, response);
+      return;
+    }
+
+    if (
+      request.method === "POST" &&
+      /^\/api\/v1\/bid-war\/advertisers\/[^/]+\/sniper-mode(?:\?.*)?$/.test(request.url ?? "")
+    ) {
+      await handleBidWarSniperMode(request, response);
+      return;
+    }
+
+    if (
+      request.method === "POST" &&
+      /^\/api\/v1\/bid-war\/advertisers\/[^/]+\/strategy\/optimize(?:\?.*)?$/.test(request.url ?? "")
+    ) {
+      await handleBidWarStrategyOptimize(request, response);
       return;
     }
 
