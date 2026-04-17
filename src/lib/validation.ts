@@ -54,7 +54,8 @@ export const OutcomeBidRequestSchema = z.object({
     verifiedLtv: z.number().positive(),
     intentScore: z.number().min(0).max(1),
     conversionRate: z.number().min(0).max(1),
-    recencyMultiplier: z.number().positive().optional()
+    recencyMultiplier: z.number().positive().optional(),
+    attentionScore: z.number().min(0).max(1).optional()
   }),
   marketPressure: z.number().positive().optional(),
   floorPrice: z.number().positive().optional(),
@@ -71,7 +72,8 @@ export const AuctionBidRequestSchema = z.object({
     verifiedLtv: z.number().positive(),
     intentScore: z.number().min(0).max(1),
     conversionRate: z.number().min(0).max(1),
-    recencyMultiplier: z.number().positive().optional()
+    recencyMultiplier: z.number().positive().optional(),
+    attentionScore: z.number().min(0).max(1).optional()
   }),
   marketPressure: z.number().positive().optional(),
   floorPrice: z.number().positive().optional(),
@@ -92,6 +94,101 @@ export const AuctionBidRequestSchema = z.object({
       currency: SettlementCurrencySchema
     })
     .optional()
+});
+
+export const ExchangeBidRequestSchema = z.object({
+  advertiserId: z.string().min(1),
+  agencyId: z.string().min(1),
+  creativeId: z.string().min(1),
+  outcomeType: z.string().min(1),
+  baseOutcomePrice: z.number().positive(),
+  bidCeiling: z.number().positive().optional(),
+  outcomeCount: z.number().int().positive(),
+  pricingCurrency: SettlementCurrencySchema.optional(),
+  placement: z.object({
+    auctionId: z.string().min(1),
+    slotId: z.string().min(1),
+    campaignId: z.string().min(1),
+    platform: z.enum(["quanttube", "quantedits", "quantchill", "quantchat", "quantmail", "quantbrowse"]),
+    pageUrl: z.string().url(),
+    placementPath: z.string().min(1),
+    adFormat: z.enum(["native-card", "story", "search", "rewarded", "video", "display"]),
+    viewport: z.object({
+      width: z.number().int().positive(),
+      height: z.number().int().positive(),
+      density: z.number().positive()
+    }),
+    viewabilityEstimate: z.number().min(0).max(1),
+    floorPrice: z.number().positive(),
+    reservePrice: z.number().positive().optional(),
+    marketPressure: z.number().positive().optional(),
+    publisherQualityScore: z.number().min(0).max(1).optional(),
+    contentSafetyScore: z.number().min(0).max(1).optional(),
+    geo: z.object({
+      country: z.string().min(2).max(2),
+      region: z.string().min(1).optional(),
+      city: z.string().min(1).optional(),
+      timezoneOffsetMinutes: z.number().int().optional()
+    }).optional()
+  }),
+  audience: z.object({
+    verifiedLtv: z.number().positive(),
+    intentScore: z.number().min(0).max(1),
+    conversionRate: z.number().min(0).max(1),
+    recencyMultiplier: z.number().positive().optional(),
+    attentionScore: z.number().min(0).max(1).optional(),
+    cohortQualityScore: z.number().min(0).max(1).optional(),
+    historicalCtr: z.number().min(0).max(1).optional(),
+    historicalOutcomeRate: z.number().min(0).max(1).optional()
+  }),
+  fingerprint: z.object({
+    sessionId: z.string().min(1),
+    userId: z.string().min(1).optional(),
+    ipHash: z.string().min(1),
+    deviceIdHash: z.string().min(1).optional(),
+    userAgent: z.string().min(1),
+    deviceCategory: z.enum(["desktop", "mobile", "tablet", "tv", "unknown"]),
+    operatingSystem: z.enum(["ios", "android", "windows", "macos", "linux", "other"]),
+    browserFamily: z.enum(["chrome", "safari", "firefox", "edge", "bot", "other"]),
+    language: z.string().min(2).optional(),
+    connectionType: z.enum(["wifi", "cellular", "ethernet", "offline", "unknown"]).optional(),
+    localHour: z.number().int().min(0).max(23).optional(),
+    tabCount: z.number().int().positive().optional(),
+    pageViewsInSession: z.number().int().nonnegative().optional(),
+    referrer: z.string().url().optional(),
+    screenColorDepth: z.number().int().positive().optional(),
+    timezoneOffsetMinutes: z.number().int().optional()
+  }),
+  interaction: z.object({
+    focusDurationMs: z.number().int().nonnegative(),
+    pointerEvents: z.number().int().nonnegative(),
+    pointerSamples: z.array(z.object({
+      dx: z.number(),
+      dy: z.number(),
+      dtMs: z.number().nonnegative()
+    })).optional(),
+    scrollDepth: z.number().min(0).max(1),
+    scrollSamples: z.array(z.object({
+      offset: z.number().nonnegative(),
+      velocity: z.number(),
+      dwellMs: z.number().nonnegative()
+    })).optional(),
+    keyEvents: z.number().int().nonnegative(),
+    rageClicks: z.number().int().nonnegative(),
+    copyPasteEvents: z.number().int().nonnegative(),
+    hoverTargets: z.number().int().nonnegative(),
+    formInteractions: z.number().int().nonnegative(),
+    mediaPlayheadMs: z.number().int().nonnegative().optional()
+  }),
+  settlementAddress: z.string().min(1),
+  settlementNetwork: z.string().min(1),
+  requestId: z.string().min(1).optional(),
+  occurredAt: z.string().datetime().optional()
+});
+
+export const ExchangeAnalyticsQuerySchema = z.object({
+  granularity: z.enum(["minute", "hour"]).optional().default("minute"),
+  limit: z.coerce.number().int().min(1).max(240).optional().default(60)
 });
 
 // ── x402 Payment ─────────────────────────────────────────────────────────────

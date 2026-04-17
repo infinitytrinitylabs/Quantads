@@ -6,6 +6,13 @@ import { TwinSimulationRequest } from "./types";
 import { handleContextualAds } from "./routes/ads";
 import { handleAuctionBid, handleAuctionWinner } from "./routes/auctions";
 import { handleCampaignAnalytics, handleRoiSummary } from "./routes/analytics";
+import {
+  handleExchangeAnalytics,
+  handleExchangeAuctionSnapshot,
+  handleExchangeBid,
+  handleExchangeDashboard,
+  handleExchangeFraudModel
+} from "./routes/exchange";
 import { handleOutcomeLookup, handleOutcomeReport } from "./routes/outcomes";
 import { handleBciIngest, handleBciAggregated } from "./routes/bci";
 import {
@@ -16,6 +23,7 @@ import {
   handleCampaignAdAnalytics
 } from "./routes/campaigns";
 import { logger } from "./lib/logger";
+import { realtimeAnalyticsHub } from "./exchange/RealtimeAnalyticsHub";
 import {
   OutcomeBidRequestSchema,
   OutcomePaymentRequestSchema,
@@ -107,6 +115,43 @@ export const app = createServer(async (request, response) => {
       return;
     }
 
+    if (
+      request.method === "POST" &&
+      /^\/api\/v1\/exchange\/auctions\/[^/]+\/slots\/[^/]+\/bid(?:\?.*)?$/.test(request.url ?? "")
+    ) {
+      await handleExchangeBid(request, response);
+      return;
+    }
+
+    if (
+      request.method === "GET" &&
+      /^\/api\/v1\/exchange\/auctions\/[^/]+\/slots\/[^/]+(?:\?.*)?$/.test(request.url ?? "")
+    ) {
+      await handleExchangeAuctionSnapshot(request, response);
+      return;
+    }
+
+    if (
+      request.method === "GET" &&
+      /^\/api\/v1\/exchange\/analytics\/advertisers\/[^/]+(?:\/events)?(?:\?.*)?$/.test(request.url ?? "")
+    ) {
+      await handleExchangeAnalytics(request, response);
+      return;
+    }
+
+    if (request.method === "GET" && request.url === "/api/v1/exchange/fraud/model") {
+      await handleExchangeFraudModel(request, response);
+      return;
+    }
+
+    if (
+      request.method === "GET" &&
+      /^\/advertisers\/[^/]+\/exchange-dashboard(?:\?.*)?$/.test(request.url ?? "")
+    ) {
+      await handleExchangeDashboard(request, response);
+      return;
+    }
+
     if (request.method === "POST" && /^\/api\/v1\/auctions\/[^/]+\/bid$/.test(request.url ?? "")) {
       await handleAuctionBid(request, response);
       return;
@@ -195,6 +240,8 @@ export const app = createServer(async (request, response) => {
     );
   }
 });
+
+realtimeAnalyticsHub.attach(app);
 
 if (require.main === module) {
   const port = Number(process.env["PORT"] ?? "3000");

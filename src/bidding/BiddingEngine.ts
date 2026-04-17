@@ -3,6 +3,7 @@ export interface AudienceSignal {
   intentScore: number;
   conversionRate: number;
   recencyMultiplier?: number;
+  attentionScore?: number;
 }
 
 export interface OutcomeBidRequest {
@@ -21,6 +22,7 @@ export interface OutcomeBidResult {
     baseOutcomePrice: number;
     ltvMultiplier: number;
     confidenceMultiplier: number;
+    attentionMultiplier: number;
     marketMultiplier: number;
     riskMultiplier: number;
   };
@@ -48,6 +50,7 @@ export class BiddingEngine {
 
     const marketPressure = request.marketPressure ?? 1;
     const recencyMultiplier = audience.recencyMultiplier ?? 1;
+    const attentionScore = audience.attentionScore ?? 0.5;
     const riskTolerance = request.riskTolerance ?? 0.3;
 
     const ltvMultiplier = clamp(
@@ -61,6 +64,7 @@ export class BiddingEngine {
       0.7,
       1.6
     );
+    const attentionMultiplier = clamp(0.6 + attentionScore * 1.2, 0.6, 1.8);
     const marketMultiplier = clamp(marketPressure, 0.8, 1.4);
     const riskMultiplier = clamp(1 - riskTolerance * 0.2, 0.75, 1);
 
@@ -68,6 +72,7 @@ export class BiddingEngine {
       baseOutcomePrice *
       ltvMultiplier *
       confidenceMultiplier *
+      attentionMultiplier *
       marketMultiplier *
       riskMultiplier;
     const floorPrice = request.floorPrice ?? baseOutcomePrice * 0.85;
@@ -81,6 +86,7 @@ export class BiddingEngine {
         baseOutcomePrice: roundCurrency(baseOutcomePrice),
         ltvMultiplier: Number(ltvMultiplier.toFixed(3)),
         confidenceMultiplier: Number(confidenceMultiplier.toFixed(3)),
+        attentionMultiplier: Number(attentionMultiplier.toFixed(3)),
         marketMultiplier: Number(marketMultiplier.toFixed(3)),
         riskMultiplier: Number(riskMultiplier.toFixed(3))
       }
