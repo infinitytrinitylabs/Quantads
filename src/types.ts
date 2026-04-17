@@ -102,6 +102,7 @@ export interface AudiencePricingSignal {
   intentScore: number;
   conversionRate: number;
   recencyMultiplier?: number;
+  attentionScore?: number;
 }
 
 export interface AuctionBidRequest {
