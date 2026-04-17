@@ -4,6 +4,7 @@ import { BiddingEngine, OutcomeBidRequest } from "./bidding/BiddingEngine";
 import { createOutcomeQuote, OutcomePaymentRequest } from "./payments/x402";
 import { TwinSimulationRequest } from "./types";
 import { handleContextualAds } from "./routes/ads";
+import { handleSmartAdEmotion, handleSmartAdRender, handleSmartAdSelect } from "./routes/smartads";
 import { handleAuctionBid, handleAuctionWinner } from "./routes/auctions";
 import { handleCampaignAnalytics, handleRoiSummary } from "./routes/analytics";
 import {
@@ -68,6 +69,21 @@ export const app = createServer(async (request, response) => {
     // Contextual ad serving – Quantmail JWT required (biometric SSO)
     if (request.method === "POST" && request.url === "/api/v1/ads/contextual") {
       await handleContextualAds(request, response);
+      return;
+    }
+
+    if (request.method === "POST" && request.url === "/api/v1/smart-ads/emotion") {
+      await handleSmartAdEmotion(request, response);
+      return;
+    }
+
+    if (request.method === "POST" && request.url === "/api/v1/smart-ads/select") {
+      await handleSmartAdSelect(request, response);
+      return;
+    }
+
+    if (request.method === "POST" && request.url === "/api/v1/smart-ads/render") {
+      await handleSmartAdRender(request, response);
       return;
     }
 
