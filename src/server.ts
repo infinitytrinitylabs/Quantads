@@ -16,6 +16,32 @@ import {
 import { handleOutcomeLookup, handleOutcomeReport } from "./routes/outcomes";
 import { handleBciIngest, handleBciAggregated } from "./routes/bci";
 import {
+  handleTickerPublish,
+  handleTickerRecent,
+  handleTickerOptOut,
+  handleTickerStream
+} from "./routes/ticker";
+import {
+  handleSplitTestCreate,
+  handleSplitTestGet,
+  handleSplitTestActivity,
+  handleSplitTestFinalize
+} from "./routes/split-tests";
+import { handleHeatmapIngest, handleHeatmapGet } from "./routes/heatmaps";
+import {
+  handleStreakRecord,
+  handleStreakGet,
+  handleMarketIntelIngest,
+  handleMarketIntelGet
+} from "./routes/performance";
+import {
+  handleAutopilotCreate,
+  handleAutopilotMode,
+  handleAutopilotEvaluate,
+  handleAutopilotGet,
+  handleAutopilotAudit
+} from "./routes/autopilot";
+import {
   handleCreateCampaign,
   handleListCampaigns,
   handleUpdateCampaign,
@@ -184,6 +210,121 @@ export const app = createServer(async (request, response) => {
       /^\/api\/v1\/bci\/attention\/[^/]+\/aggregated$/.test(request.url ?? "")
     ) {
       await handleBciAggregated(request, response);
+      return;
+    }
+
+    // ── Auction Ticker (transparency) ────────────────────────────────────────
+    if (request.method === "POST" && request.url === "/api/v1/ticker/publish") {
+      await handleTickerPublish(request, response);
+      return;
+    }
+    if (request.method === "GET" && request.url?.startsWith("/api/v1/ticker/recent")) {
+      await handleTickerRecent(request, response);
+      return;
+    }
+    if (request.method === "POST" && request.url === "/api/v1/ticker/opt-out") {
+      await handleTickerOptOut(request, response);
+      return;
+    }
+    if (request.method === "GET" && request.url === "/api/v1/ticker/stream") {
+      await handleTickerStream(request, response);
+      return;
+    }
+
+    // ── Audience Split Tests (standard A/B) ──────────────────────────────────
+    if (request.method === "POST" && request.url === "/api/v1/split-tests") {
+      await handleSplitTestCreate(request, response);
+      return;
+    }
+    if (
+      request.method === "POST" &&
+      /^\/api\/v1\/split-tests\/[^/]+\/activity$/.test(request.url ?? "")
+    ) {
+      await handleSplitTestActivity(request, response);
+      return;
+    }
+    if (
+      request.method === "POST" &&
+      /^\/api\/v1\/split-tests\/[^/]+\/finalize$/.test(request.url ?? "")
+    ) {
+      await handleSplitTestFinalize(request, response);
+      return;
+    }
+    if (request.method === "GET" && /^\/api\/v1\/split-tests\/[^/]+$/.test(request.url ?? "")) {
+      await handleSplitTestGet(request, response);
+      return;
+    }
+
+    // ── Attention Heatmaps (privacy-preserving) ──────────────────────────────
+    if (request.method === "POST" && request.url === "/api/v1/heatmaps/samples") {
+      await handleHeatmapIngest(request, response);
+      return;
+    }
+    if (
+      request.method === "GET" &&
+      /^\/api\/v1\/heatmaps\/[^/]+\/[^/?]+(\?.*)?$/.test(request.url ?? "")
+    ) {
+      await handleHeatmapGet(request, response);
+      return;
+    }
+
+    // ── Performance Streak (factual reporting) ───────────────────────────────
+    if (request.method === "POST" && request.url === "/api/v1/performance/record") {
+      await handleStreakRecord(request, response);
+      return;
+    }
+    if (
+      request.method === "GET" &&
+      /^\/api\/v1\/performance\/[^/]+\/streak$/.test(request.url ?? "")
+    ) {
+      await handleStreakGet(request, response);
+      return;
+    }
+
+    // ── Competitor Market Intelligence (pull-only, k-anonymous) ──────────────
+    if (request.method === "POST" && request.url === "/api/v1/market-intel/samples") {
+      await handleMarketIntelIngest(request, response);
+      return;
+    }
+    if (
+      request.method === "GET" &&
+      /^\/api\/v1\/market-intel\/[^/?]+(\?.*)?$/.test(request.url ?? "")
+    ) {
+      await handleMarketIntelGet(request, response);
+      return;
+    }
+
+    // ── Bid Autopilot (opt-in, capped, audited) ──────────────────────────────
+    if (request.method === "POST" && request.url === "/api/v1/autopilot/policies") {
+      await handleAutopilotCreate(request, response);
+      return;
+    }
+    if (
+      request.method === "POST" &&
+      /^\/api\/v1\/autopilot\/policies\/[^/]+\/mode$/.test(request.url ?? "")
+    ) {
+      await handleAutopilotMode(request, response);
+      return;
+    }
+    if (
+      request.method === "POST" &&
+      /^\/api\/v1\/autopilot\/policies\/[^/]+\/evaluate$/.test(request.url ?? "")
+    ) {
+      await handleAutopilotEvaluate(request, response);
+      return;
+    }
+    if (
+      request.method === "GET" &&
+      /^\/api\/v1\/autopilot\/policies\/[^/]+\/audit$/.test(request.url ?? "")
+    ) {
+      await handleAutopilotAudit(request, response);
+      return;
+    }
+    if (
+      request.method === "GET" &&
+      /^\/api\/v1\/autopilot\/policies\/[^/]+$/.test(request.url ?? "")
+    ) {
+      await handleAutopilotGet(request, response);
       return;
     }
 
