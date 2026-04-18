@@ -322,3 +322,147 @@ export const ClickInputSchema = z.object({
   userId: z.string().min(1),
   timestamp: z.string().datetime().optional()
 });
+
+// ── Smart Ads ──────────────────────────────────────────────────────────────────
+
+const SmartEmotionSchema = z.enum([
+  "curious",
+  "focused",
+  "excited",
+  "delighted",
+  "skeptical",
+  "frustrated",
+  "overwhelmed",
+  "ready-to-convert",
+  "neutral"
+]);
+
+const SmartPlacementSchema = z.object({
+  platform: z.enum(["quanttube", "quantedits", "quantchill", "quantchat", "quantmail", "quantbrowse"]),
+  adFormat: z.enum(["native-card", "story", "search", "rewarded", "video", "display"]),
+  width: z.number().int().min(200).max(1920),
+  height: z.number().int().min(120).max(1600),
+  density: z.number().positive().optional(),
+  deviceCategory: z.enum(["desktop", "mobile", "tablet", "tv", "unknown"]),
+  placementPath: z.string().min(1).max(512),
+  viewabilityEstimate: z.number().min(0).max(1),
+  locale: z.string().min(2).max(32).optional(),
+  localHour: z.number().int().min(0).max(23).optional()
+});
+
+const SmartAudienceSchema = z.object({
+  verifiedLtv: z.number().positive(),
+  intentScore: z.number().min(0).max(1),
+  conversionRate: z.number().min(0).max(1),
+  attentionScore: z.number().min(0).max(1).optional(),
+  fatigueScore: z.number().min(0).max(1).optional(),
+  familiarityScore: z.number().min(0).max(1).optional(),
+  purchasePowerIndex: z.number().min(0).max(1).optional(),
+  recentWins: z.number().int().min(0).optional(),
+  recentLosses: z.number().int().min(0).optional(),
+  lastEmotion: SmartEmotionSchema.optional()
+});
+
+const SmartObjectivesSchema = z.object({
+  primaryOutcome: z.enum(["purchase", "install", "signup", "lead", "watch", "visit"]),
+  priority: z.enum(["reach", "attention", "conversion", "retention"]),
+  targetCpa: z.number().positive().optional(),
+  targetRoas: z.number().positive().optional(),
+  budgetSensitivity: z.number().min(0).max(1).optional()
+});
+
+const SmartProductSchema = z.object({
+  name: z.string().min(1).max(256),
+  brandName: z.string().min(1).max(256),
+  category: z.string().min(1).max(128),
+  price: z.number().nonnegative(),
+  compareAtPrice: z.number().nonnegative().optional(),
+  currency: z.string().regex(/^[A-Za-z]{3,5}$/).optional(),
+  offerHeadline: z.string().min(1).max(256).optional(),
+  offerBody: z.string().min(1).max(512).optional(),
+  destinationUrl: z.string().url(),
+  imageUrl: z.string().url().optional(),
+  valueProps: z.array(z.string().min(1).max(140)).min(1).max(6),
+  proofPoints: z.array(z.string().min(1).max(180)).min(1).max(6),
+  badges: z.array(z.string().min(1).max(80)).max(6).optional()
+});
+
+const SmartHistorySchema = z.object({
+  recentImpressions: z.number().int().min(0).optional(),
+  recentClicks: z.number().int().min(0).optional(),
+  recentConversions: z.number().int().min(0).optional(),
+  priorAttentionDelta: z.number().min(-1).max(1).optional(),
+  previousEmotion: SmartEmotionSchema.optional(),
+  dwellTrend: z.number().min(-1).max(1).optional(),
+  averageScrollDepth: z.number().min(0).max(1).optional()
+}).optional();
+
+const SmartEnvironmentSchema = z.object({
+  contentGenre: z.string().min(1).max(128).optional(),
+  sessionDepth: z.number().int().min(0).max(1000).optional(),
+  culturalMoment: z.string().min(1).max(128).optional(),
+  soundtrackEnergy: z.number().min(0).max(1).optional()
+}).optional();
+
+const SmartCreativePaletteSchema = z.object({
+  background: z.string().min(4).max(32),
+  surface: z.string().min(4).max(32),
+  accent: z.string().min(4).max(32),
+  accentSoft: z.string().min(4).max(32),
+  text: z.string().min(4).max(32),
+  mutedText: z.string().min(4).max(32),
+  ctaText: z.string().min(4).max(32),
+  border: z.string().min(4).max(64),
+  shadow: z.string().min(4).max(64)
+});
+
+const SmartCreativeInputSchema = z.object({
+  creativeId: z.string().min(1),
+  campaignId: z.string().min(1),
+  name: z.string().min(1).max(256),
+  headline: z.string().min(1).max(256),
+  body: z.string().min(1).max(512),
+  ctaLabel: z.string().min(1).max(64),
+  layout: z.enum(["spotlight", "immersive", "commerce-card", "story-stack"]),
+  format: z.enum(["native-card", "story", "search", "rewarded", "video", "display"]),
+  motion: z.enum(["still", "gentle", "energetic"]),
+  messagingAngle: z.enum([
+    "benefit-led",
+    "proof-led",
+    "urgency-led",
+    "education-led",
+    "reassurance-led",
+    "community-led"
+  ]),
+  emotionAffinity: z.array(SmartEmotionSchema).min(1).max(5),
+  attentionBands: z.array(z.enum(["glance", "engaged", "immersed"])).min(1).max(3),
+  platformAffinity: z.array(z.enum(["quanttube", "quantedits", "quantchill", "quantchat", "quantmail", "quantbrowse"])).min(1).max(6),
+  deviceAffinity: z.array(z.enum(["desktop", "mobile", "tablet", "tv", "unknown"])).min(1).max(5),
+  valueProps: z.array(z.string().min(1).max(140)).min(1).max(6),
+  proofPoints: z.array(z.string().min(1).max(180)).min(1).max(6),
+  badges: z.array(z.string().min(1).max(80)).max(6),
+  keywords: z.array(z.string().min(1).max(64)).min(1).max(10),
+  palette: SmartCreativePaletteSchema,
+  urgency: z.number().min(0).max(1),
+  trustWeight: z.number().min(0).max(1),
+  noveltyWeight: z.number().min(0).max(1),
+  fatiguePenalty: z.number().min(0).max(1)
+});
+
+const SmartAdBaseRequestSchema = z.object({
+  advertiserId: z.string().min(1),
+  campaignId: z.string().min(1),
+  userId: z.string().min(1).optional(),
+  placement: SmartPlacementSchema,
+  audience: SmartAudienceSchema,
+  objectives: SmartObjectivesSchema,
+  product: SmartProductSchema,
+  interaction: ExchangeBidRequestSchema.shape.interaction,
+  history: SmartHistorySchema,
+  environment: SmartEnvironmentSchema,
+  creativeInputs: z.array(SmartCreativeInputSchema).max(8).optional()
+});
+
+export const SmartAdEmotionRequestSchema = SmartAdBaseRequestSchema;
+export const SmartAdSelectRequestSchema = SmartAdBaseRequestSchema;
+export const SmartAdRenderRequestSchema = SmartAdBaseRequestSchema;
