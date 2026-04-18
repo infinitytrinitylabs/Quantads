@@ -16,6 +16,14 @@ import {
 import { handleOutcomeLookup, handleOutcomeReport } from "./routes/outcomes";
 import { handleBciIngest, handleBciAggregated } from "./routes/bci";
 import {
+  handleSmartAdRender,
+  handleEmotionIngest,
+  handleSmartAdPreview,
+  handleAbImpression,
+  handleAbClick,
+  handleAbMetrics
+} from "./routes/smart-ads";
+import {
   handleTickerPublish,
   handleTickerRecent,
   handleTickerOptOut,
@@ -41,6 +49,12 @@ import {
   handleAutopilotGet,
   handleAutopilotAudit
 } from "./routes/autopilot";
+import {
+  handleBidWarRoom,
+  handleBidWarSnapshot,
+  handleBidWarSniperMode,
+  handleBidWarStrategyOptimize
+} from "./routes/bid-war";
 import {
   handleCreateCampaign,
   handleListCampaigns,
@@ -178,6 +192,14 @@ export const app = createServer(async (request, response) => {
       return;
     }
 
+    if (
+      request.method === "GET" &&
+      /^\/advertisers\/[^/]+\/bid-war-room(?:\?.*)?$/.test(request.url ?? "")
+    ) {
+      await handleBidWarRoom(request, response);
+      return;
+    }
+
     if (request.method === "POST" && /^\/api\/v1\/auctions\/[^/]+\/bid$/.test(request.url ?? "")) {
       await handleAuctionBid(request, response);
       return;
@@ -210,6 +232,44 @@ export const app = createServer(async (request, response) => {
       /^\/api\/v1\/bci\/attention\/[^/]+\/aggregated$/.test(request.url ?? "")
     ) {
       await handleBciAggregated(request, response);
+      return;
+    }
+
+    // ── Smart Ads ─────────────────────────────────────────────────────────────
+
+    // POST /api/v1/smart-ads/render — compose adaptive ad creative
+    if (request.method === "POST" && request.url === "/api/v1/smart-ads/render") {
+      await handleSmartAdRender(request, response);
+      return;
+    }
+
+    // POST /api/v1/smart-ads/emotion — ingest behavioural sample
+    if (request.method === "POST" && request.url === "/api/v1/smart-ads/emotion") {
+      await handleEmotionIngest(request, response);
+      return;
+    }
+
+    // GET /api/v1/smart-ads/preview — advertiser preview page
+    if (request.method === "GET" && (request.url === "/api/v1/smart-ads/preview" || request.url?.startsWith("/api/v1/smart-ads/preview?"))) {
+      await handleSmartAdPreview(request, response);
+      return;
+    }
+
+    // POST /api/v1/smart-ads/ab/impression
+    if (request.method === "POST" && request.url === "/api/v1/smart-ads/ab/impression") {
+      await handleAbImpression(request, response);
+      return;
+    }
+
+    // POST /api/v1/smart-ads/ab/click
+    if (request.method === "POST" && request.url === "/api/v1/smart-ads/ab/click") {
+      await handleAbClick(request, response);
+      return;
+    }
+
+    // GET /api/v1/smart-ads/ab/metrics
+    if (request.method === "GET" && (request.url === "/api/v1/smart-ads/ab/metrics" || request.url?.startsWith("/api/v1/smart-ads/ab/metrics?"))) {
+      await handleAbMetrics(request, response);
       return;
     }
 
@@ -325,6 +385,30 @@ export const app = createServer(async (request, response) => {
       /^\/api\/v1\/autopilot\/policies\/[^/]+$/.test(request.url ?? "")
     ) {
       await handleAutopilotGet(request, response);
+      return;
+    }
+
+    if (
+      request.method === "GET" &&
+      /^\/api\/v1\/bid-war\/advertisers\/[^/?]+(?:\?.*)?$/.test(request.url ?? "")
+    ) {
+      await handleBidWarSnapshot(request, response);
+      return;
+    }
+
+    if (
+      request.method === "POST" &&
+      /^\/api\/v1\/bid-war\/advertisers\/[^/]+\/sniper-mode(?:\?.*)?$/.test(request.url ?? "")
+    ) {
+      await handleBidWarSniperMode(request, response);
+      return;
+    }
+
+    if (
+      request.method === "POST" &&
+      /^\/api\/v1\/bid-war\/advertisers\/[^/]+\/strategy\/optimize(?:\?.*)?$/.test(request.url ?? "")
+    ) {
+      await handleBidWarStrategyOptimize(request, response);
       return;
     }
 
