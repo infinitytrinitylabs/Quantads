@@ -274,9 +274,9 @@ export const app = createServer(async (request, response) => {
 
     // ── Smart Ads ─────────────────────────────────────────────────────────────
 
-    // POST /api/v1/smart-ads/render — compose adaptive ad creative (legacy handler)
+    // POST /api/v1/smart-ads/render — compose adaptive ad creative (V2 handler from smart-ads module)
     if (request.method === "POST" && request.url === "/api/v1/smart-ads/render") {
-      await handleSmartAdRender(request, response);
+      await handleSmartAdRenderV2(request, response);
       return;
     }
 
