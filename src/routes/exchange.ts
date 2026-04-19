@@ -1,9 +1,15 @@
 import { IncomingMessage, ServerResponse } from "node:http";
+import { hfbExchange } from "../exchange/HFBExchange";
 import { adExchangeEngine } from "../exchange/AdExchangeEngine";
 import { getAdvertiserDashboardHtml } from "../exchange/AdvertiserDashboardPage";
 import { exchangeAnalyticsStore } from "../exchange/ExchangeAnalyticsStore";
-import { ExchangeAnalyticsQuerySchema, ExchangeBidRequestSchema } from "../lib/validation";
+import {
+  ExchangeAnalyticsQuerySchema,
+  ExchangeBidRequestSchema,
+  HFBBidSchema
+} from "../lib/validation";
 import { withAuth } from "../middleware/auth";
+import { logger } from "../lib/logger";
 
 const sendJson = (res: ServerResponse, status: number, body: unknown): void => {
   res.writeHead(status, { "content-type": "application/json; charset=utf-8" });
@@ -65,6 +71,11 @@ const parseAdvertiserRoute = (url: string | undefined): { advertiserId: string; 
   };
 };
 
+/**
+ * POST /api/v1/exchange/auctions/:auctionId/slots/:slotId/bid
+ *
+ * Route-scoped auction bid submission handled by the AdExchangeEngine.
+ */
 export const handleExchangeBid = withAuth(async (req: IncomingMessage, res: ServerResponse) => {
   const route = parseExchangeAuctionRoute(req.url);
   if (!route || !req.url?.includes("/bid")) {
@@ -158,4 +169,54 @@ export const handleExchangeFraudModel = withAuth(async (_req: IncomingMessage, r
     model: adExchangeEngine.getFraudModelSnapshot(),
     featureDrift: adExchangeEngine.getFraudFeatureDrift()
   });
+});
+
+/**
+ * POST /api/v1/exchange/bid
+ *
+ * High-frequency in-process exchange bid via ring-buffer (HFB).
+ * Returns the assigned stream ID (mirrors Redis Stream entry ID format).
+ * If the buffer is full (back-pressure), returns 429.
+ *
+ * Immediately drains a small batch after submission so tests can observe
+ * clearing results synchronously.
+ */
+export const handleHfbExchangeBid = withAuth(async (req: IncomingMessage, res: ServerResponse) => {
+  const raw = await readJson(req);
+  const parsed = HFBBidSchema.safeParse(raw);
+
+  if (!parsed.success) {
+    const errors = parsed.error.issues.map((e) => `${e.path.join(".")}: ${e.message}`);
+    logger.warn({ errors }, "HFB exchange bid validation failed");
+    sendJson(res, 422, { error: "Validation failed", details: errors });
+    return;
+  }
+
+  const bid = {
+    ...parsed.data,
+    submittedAt: new Date().toISOString()
+  };
+
+  const streamId = hfbExchange.submit(bid);
+
+  if (streamId === null) {
+    sendJson(res, 429, { error: "Exchange buffer full – retry later" });
+    return;
+  }
+
+  logger.debug({ streamId, adSlotId: bid.adSlotId }, "HFB exchange bid submitted");
+
+  // Eagerly drain a batch so the result is available without a separate call
+  const cleared = hfbExchange.drain(64);
+
+  sendJson(res, 200, { streamId, cleared });
+});
+
+/**
+ * GET /api/v1/exchange/stats
+ *
+ * Returns throughput and buffer statistics for the HFB exchange.
+ */
+export const handleHfbExchangeStats = withAuth(async (_req: IncomingMessage, res: ServerResponse) => {
+  sendJson(res, 200, hfbExchange.stats());
 });

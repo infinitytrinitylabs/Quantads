@@ -3,6 +3,12 @@ export interface AudienceSignal {
   intentScore: number;
   conversionRate: number;
   recencyMultiplier?: number;
+  /**
+   * Real-time BCI (Brain-Computer Interface) composite attention score from the
+   * Quantads attention pipeline.  Range 0.0 (fully distracted) to 1.0 (fully
+   * attentive).  When present, scales the effective CPC via an attention
+   * multiplier [0.6, 1.8]; when absent defaults to 1.0 (backward-compatible).
+   */
   attentionScore?: number;
 }
 
@@ -142,7 +148,6 @@ export class BiddingEngine {
 
     const marketPressure = request.marketPressure ?? 1;
     const recencyMultiplier = audience.recencyMultiplier ?? 1;
-    const attentionScore = audience.attentionScore ?? 0.5;
     const riskTolerance = request.riskTolerance ?? 0.3;
 
     const ltvMultiplier = clamp(
@@ -155,7 +160,13 @@ export class BiddingEngine {
       0.7,
       1.6
     );
-    const attentionMultiplier = clamp(0.6 + attentionScore * 1.2, 0.6, 1.8);
+    // BCI attention multiplier: maps [0,1] → [0.6,1.8].
+    // Defaults to 1.0 when no real-time biometric signal is available
+    // (backward-compatible with callers that do not supply attentionScore).
+    const attentionMultiplier =
+      audience.attentionScore !== undefined
+        ? clamp(0.6 + audience.attentionScore * 1.2, 0.6, 1.8)
+        : 1.0;
     const marketMultiplier = clamp(marketPressure, 0.8, 1.4);
     const riskMultiplier = clamp(1 - riskTolerance * 0.2, 0.75, 1);
 

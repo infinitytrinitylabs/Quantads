@@ -263,6 +263,31 @@ export const TwinSimulationRequestSchema = z.object({
   })).min(1)
 });
 
+// ── BCI Attention Ingest (biometric sample) ──────────────────────────────────
+
+export const BciAttentionIngestSchema = z.object({
+  sample: z.object({
+    eyeTrackingScore: z.number().min(0).max(1),
+    heartRate: z.number().min(30).max(220),
+    neuralActivity: z.number().min(0).max(1),
+    recordedAt: z.string().datetime()
+  })
+});
+
+export type BciAttentionIngest = z.infer<typeof BciAttentionIngestSchema>;
+
+// ── HFB Exchange Bid ──────────────────────────────────────────────────────────
+
+export const HFBBidSchema = z.object({
+  bidId: z.string().min(1),
+  advertiserId: z.string().min(1),
+  adSlotId: z.string().min(1),
+  cpcBid: z.number().positive(),
+  attentionScore: z.number().min(0).max(1)
+});
+
+export type HFBBid = z.infer<typeof HFBBidSchema>;
+
 // ── Campaign Management ───────────────────────────────────────────────────────
 
 export const CampaignTargetingRulesSchema = z.object({

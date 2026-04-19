@@ -12,12 +12,15 @@ import {
   handleExchangeAuctionSnapshot,
   handleExchangeBid,
   handleExchangeDashboard,
-  handleExchangeFraudModel
+  handleExchangeFraudModel,
+  handleHfbExchangeBid,
+  handleHfbExchangeStats
 } from "./routes/exchange";
 import { handleOutcomeLookup, handleOutcomeReport } from "./routes/outcomes";
 import { handleBciIngest, handleBciAggregated } from "./routes/bci";
+import { handleDashboardStream } from "./routes/dashboard";
 import {
-  handleSmartAdRender,
+  handleSmartAdRender as handleSmartAdRenderV2,
   handleEmotionIngest,
   handleSmartAdPreview,
   handleAbImpression,
@@ -251,11 +254,29 @@ export const app = createServer(async (request, response) => {
       return;
     }
 
+    // HFB exchange – high-frequency in-process ring-buffer bid submission
+    if (request.method === "POST" && request.url === "/api/v1/exchange/bid") {
+      await handleHfbExchangeBid(request, response);
+      return;
+    }
+
+    // HFB exchange – throughput / buffer statistics
+    if (request.method === "GET" && request.url === "/api/v1/exchange/stats") {
+      await handleHfbExchangeStats(request, response);
+      return;
+    }
+
+    // Real-time advertiser analytics dashboard (SSE)
+    if (request.method === "GET" && request.url === "/api/v1/dashboard/stream") {
+      await handleDashboardStream(request, response);
+      return;
+    }
+
     // ── Smart Ads ─────────────────────────────────────────────────────────────
 
-    // POST /api/v1/smart-ads/render — compose adaptive ad creative
+    // POST /api/v1/smart-ads/render — compose adaptive ad creative (V2 handler from smart-ads module)
     if (request.method === "POST" && request.url === "/api/v1/smart-ads/render") {
-      await handleSmartAdRender(request, response);
+      await handleSmartAdRenderV2(request, response);
       return;
     }
 
