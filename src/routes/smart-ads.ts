@@ -29,8 +29,8 @@ import { logger } from "../lib/logger";
 import { AdaptiveCreativeEngine, AdaptiveCreativeInput } from "../services/AdaptiveCreativeEngine";
 import { CreativeComposer, AdFormat, AD_DIMENSIONS } from "../services/CreativeComposer";
 import { EmotionDetector } from "../services/EmotionDetector";
-import { FocusAggregator } from "../services/FocusAggregator";
-import { FormatShifter } from "../services/FormatShifter";
+import { FocusAggregator, FocusSnapshot } from "../services/FocusAggregator";
+import { FormatShifter, DeliveryPlan } from "../services/FormatShifter";
 import { AdRewardsUI } from "../components/AdRewardsUI";
 import { SmartAdRenderer } from "../components/SmartAdRenderer";
 
@@ -60,7 +60,8 @@ const FocusTelemetrySchema = z.object({
   scrollPauseMs: z.number().min(0),
   interactionCount: z.number().int().min(0),
   sampleWindowMs: z.number().int().positive().max(60_000).optional(),
-  skipCount: z.number().int().min(0).optional()
+  skipCount: z.number().int().min(0).optional(),
+  skipRate: z.number().min(0).max(1).optional()
 });
 
 const RewardProgressSchema = z.object({
@@ -139,7 +140,12 @@ function parseQs(url: string): Record<string, string> {
   return params;
 }
 
-function resolveFormatForDelivery(requestedFormat: AdFormat, mode: "narrative-longform" | "micro-burst"): AdFormat {
+/**
+ * Maps the requested format to a delivery-safe format for the selected mode.
+ * Micro-burst mode biases to short banner formats; narrative mode upgrades
+ * constrained banners to native for richer storytelling surface area.
+ */
+function mapFormatToDeliveryMode(requestedFormat: AdFormat, mode: "narrative-longform" | "micro-burst"): AdFormat {
   if (mode === "micro-burst") {
     return requestedFormat === "banner-leaderboard" ? "banner-leaderboard" : "banner-mobile";
   }
@@ -168,23 +174,8 @@ export const handleSmartAdRender = withAuth(async (req: IncomingMessage, res: Se
 
     const data = parsed.data;
     let activeFormat: AdFormat = data.format;
-    let focusSnapshot:
-      | {
-        attentionDepthScore: number;
-        attentionDepth: "fragmented" | "steady" | "deep";
-        confidence: number;
-        samplesProcessed: number;
-      }
-      | undefined;
-    let deliveryPlan:
-      | {
-        mode: "narrative-longform" | "micro-burst";
-        maxDurationSeconds: number;
-        pacingMultiplier: number;
-        visualResonance: "cinematic" | "high-impact";
-        rationale: string[];
-      }
-      | undefined;
+    let focusSnapshot: FocusSnapshot | undefined;
+    let deliveryPlan: DeliveryPlan | undefined;
 
     if (data.dynamicDelivery) {
       focusSnapshot = data.focusTelemetry
@@ -196,11 +187,9 @@ export const handleSmartAdRender = withAuth(async (req: IncomingMessage, res: Se
         : focusAggregator.snapshotFromAttentionScore(data.attentionScore);
       deliveryPlan = formatShifter.selectDelivery({
         attentionDepthScore: focusSnapshot.attentionDepthScore,
-        skipRate: data.focusTelemetry && data.focusTelemetry.skipCount !== undefined
-          ? data.focusTelemetry.skipCount / Math.max(1, data.focusTelemetry.interactionCount)
-          : 0
+        skipRate: data.focusTelemetry?.skipRate
       });
-      activeFormat = resolveFormatForDelivery(data.format, deliveryPlan.mode);
+      activeFormat = mapFormatToDeliveryMode(data.format, deliveryPlan.mode);
     }
 
     const input: AdaptiveCreativeInput = {

@@ -3,6 +3,11 @@
  *
  * Aggregates on-device engagement telemetry into an abstract attention-depth
  * score. Raw telemetry samples are never retained after aggregation.
+ *
+ * Calibration notes:
+ * - Pause-duration midpoint and interaction caps are tuned to separate
+ *   quick-feed scanning from sustained focus.
+ * - Confidence starts conservative, then increases with stable sample volume.
  */
 
 export type AttentionDepth = "fragmented" | "steady" | "deep";
@@ -22,6 +27,21 @@ export interface FocusSnapshot {
 }
 
 const DEFAULT_WINDOW_MS = 5_000;
+// ~2.2s pause is a practical midpoint between scanning and deep-reading behavior.
+const PAUSE_DURATION_KNEE_MS = 2_200;
+// Interactions/min above this value are capped to avoid over-rewarding noisy sessions.
+const MAX_INTERACTIONS_PER_MINUTE = 18;
+const WARMUP_SAMPLE_COUNT = 8;
+const WARMUP_SMOOTHING_FACTOR = 0.35;
+const STEADY_SMOOTHING_FACTOR = 0.2;
+const PAUSE_WEIGHT = 0.58;
+const INTERACTION_WEIGHT = 0.42;
+const MAX_CONFIDENCE = 0.98;
+const BASE_CONFIDENCE = 0.35;
+const CONFIDENCE_GROWTH_PER_SAMPLE = 0.08;
+const VOLATILITY_CONFIDENCE_PENALTY = 0.7;
+const MIN_CONFIDENCE = 0.2;
+const SYNTHETIC_SNAPSHOT_CONFIDENCE = 0.45;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
@@ -47,26 +67,29 @@ export class FocusAggregator {
 
   ingest(signal: FocusSignal): FocusSnapshot {
     const windowMs = signal.sampleWindowMs ?? DEFAULT_WINDOW_MS;
-    const pauseScore = clamp(sigmoid(signal.scrollPauseMs, 2_200), 0, 1);
+    const pauseScore = clamp(sigmoid(signal.scrollPauseMs, PAUSE_DURATION_KNEE_MS), 0, 1);
     const interactionsPerMinute = windowMs > 0
       ? signal.interactionCount * (60_000 / windowMs)
       : 0;
-    const interactionScore = clamp(interactionsPerMinute / 18, 0, 1);
+    const interactionScore = clamp(interactionsPerMinute / MAX_INTERACTIONS_PER_MINUTE, 0, 1);
 
     this.samples += 1;
-    const smoothing = this.samples < 8 ? 0.35 : 0.2;
+    const smoothing = this.samples < WARMUP_SAMPLE_COUNT
+      ? WARMUP_SMOOTHING_FACTOR
+      : STEADY_SMOOTHING_FACTOR;
     this.pauseEma = this.pauseEma + (pauseScore - this.pauseEma) * smoothing;
     this.interactionEma = this.interactionEma + (interactionScore - this.interactionEma) * smoothing;
 
-    const score = clamp(0.58 * this.pauseEma + 0.42 * this.interactionEma, 0, 1);
+    const score = clamp(PAUSE_WEIGHT * this.pauseEma + INTERACTION_WEIGHT * this.interactionEma, 0, 1);
     const delta = Math.abs(score - this.lastScore);
     this.volatilityEma = this.volatilityEma + (delta - this.volatilityEma) * 0.25;
     this.lastScore = score;
 
     const confidence = clamp(
-      Math.min(0.98, 0.35 + this.samples * 0.08) * (1 - this.volatilityEma * 0.7),
-      0.2,
-      0.98
+      Math.min(MAX_CONFIDENCE, BASE_CONFIDENCE + this.samples * CONFIDENCE_GROWTH_PER_SAMPLE) *
+      (1 - this.volatilityEma * VOLATILITY_CONFIDENCE_PENALTY),
+      MIN_CONFIDENCE,
+      MAX_CONFIDENCE
     );
 
     return {
@@ -83,7 +106,7 @@ export class FocusAggregator {
     return {
       attentionDepthScore: score,
       attentionDepth: classifyAttentionDepth(score),
-      confidence: 0.45,
+      confidence: SYNTHETIC_SNAPSHOT_CONFIDENCE,
       samplesProcessed: this.samples,
       computedAt: new Date().toISOString()
     };

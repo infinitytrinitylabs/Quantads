@@ -19,8 +19,8 @@ test("FocusAggregator computes abstract attention depth without exposing raw tel
 
   assert.ok(snapshot.attentionDepthScore >= 0 && snapshot.attentionDepthScore <= 1);
   assert.ok(["fragmented", "steady", "deep"].includes(snapshot.attentionDepth));
-  assert.equal("scrollPauseMs" in (snapshot as unknown as Record<string, unknown>), false);
-  assert.equal("interactionCount" in (snapshot as unknown as Record<string, unknown>), false);
+  assert.equal(Object.hasOwn(snapshot, "scrollPauseMs"), false);
+  assert.equal(Object.hasOwn(snapshot, "interactionCount"), false);
 });
 
 test("FormatShifter returns narrative mode for deep attention and sub-3s burst mode for fragmented attention", () => {
