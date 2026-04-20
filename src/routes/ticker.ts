@@ -95,11 +95,21 @@ export const handleTickerStream = withAuth(async (req: IncomingMessage, res: Ser
   res.write(`event: snapshot\ndata: ${JSON.stringify(snap)}\n\n`);
 
   const unsubscribe = auctionTickerService.subscribe((ev) => {
-    res.write(`event: bid\ndata: ${JSON.stringify(ev)}\n\n`);
+    try {
+      res.write(`event: bid\ndata: ${JSON.stringify(ev)}\n\n`);
+    } catch (err) {
+      logger.debug({ err }, "ticker stream write error");
+      close();
+    }
   });
 
   const heartbeat = setInterval(() => {
-    res.write(`: keepalive ${Date.now()}\n\n`);
+    try {
+      res.write(`: keepalive ${Date.now()}\n\n`);
+    } catch (err) {
+      logger.debug({ err }, "ticker heartbeat write error");
+      close();
+    }
   }, 15_000);
 
   const close = (): void => {

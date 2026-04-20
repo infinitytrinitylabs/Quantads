@@ -53,7 +53,7 @@ const VALID_FORMATS: AdFormat[] = [
 const RenderRequestSchema = z.object({
   campaignId: z.string().min(1).max(128),
   attentionScore: z.number().min(0).max(1),
-  emotionalState: z.enum(["happy", "neutral", "bored", "frustrated"]),
+  emotionalState: z.enum(["curious", "focused", "excited", "delighted", "skeptical", "frustrated", "overwhelmed", "ready-to-convert", "neutral"]),
   context: z.string().min(1).max(512),
   deviceType: z.enum(["mobile", "tablet", "desktop"]),
   localHour: z.number().int().min(0).max(23),
@@ -253,7 +253,7 @@ export const handleSmartAdPreview = withAuth(async (req: IncomingMessage, res: S
     const deviceType = (["mobile", "tablet", "desktop"].includes(qs["deviceType"] ?? "")
       ? qs["deviceType"]
       : PREVIEW_DEFAULTS.deviceType) as AdaptiveCreativeInput["deviceType"];
-    const emotionalState = (["happy", "neutral", "bored", "frustrated"].includes(qs["emotionalState"] ?? "")
+    const emotionalState = (["curious", "focused", "excited", "delighted", "skeptical", "frustrated", "overwhelmed", "ready-to-convert", "neutral"].includes(qs["emotionalState"] ?? "")
       ? qs["emotionalState"]
       : PREVIEW_DEFAULTS.emotionalState) as AdaptiveCreativeInput["emotionalState"];
     const localHour = qs["localHour"] !== undefined

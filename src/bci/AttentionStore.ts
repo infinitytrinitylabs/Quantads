@@ -108,9 +108,11 @@ export class AttentionStore {
 
     // Evict samples older than WINDOW_SECONDS
     const cutoff = new Date(sample.recordedAt).getTime() - WINDOW_SECONDS * 1000;
-    window.samples = window.samples.filter(
-      (s) => new Date(s.recordedAt).getTime() >= cutoff
-    );
+    window.samples = window.samples.filter((s) => {
+      const timestamp = new Date(s.recordedAt).getTime();
+      // Filter out samples with invalid timestamps (NaN)
+      return !isNaN(timestamp) && timestamp >= cutoff;
+    });
 
     // Ring-buffer cap: drop oldest if at max
     if (window.samples.length >= MAX_SAMPLES_PER_USER) {

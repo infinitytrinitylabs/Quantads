@@ -93,7 +93,9 @@ export class OutcomeStore {
     ledger.reportedOutcomeCount += report.outcomeCount;
     ledger.billableOutcomeCount = Math.min(ledger.reportedOutcomeCount, ledger.quotedOutcomeCount);
     ledger.outcomeValueGenerated = round(ledger.outcomeValueGenerated + report.valueGenerated);
-    ledger.deliveryProgress = round(ledger.billableOutcomeCount / ledger.quotedOutcomeCount);
+    ledger.deliveryProgress = ledger.quotedOutcomeCount > 0
+      ? round(ledger.billableOutcomeCount / ledger.quotedOutcomeCount)
+      : 0;
     const spendBase = ledger.settledAmount ?? ledger.quotedAmount;
     ledger.roas = this.calculateRoas(ledger.outcomeValueGenerated, spendBase);
 

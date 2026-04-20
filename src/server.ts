@@ -20,8 +20,6 @@ import { handleOutcomeLookup, handleOutcomeReport } from "./routes/outcomes";
 import { handleBciIngest, handleBciAggregated } from "./routes/bci";
 import { handleDashboardStream } from "./routes/dashboard";
 import {
-  handleSmartAdRender as handleSmartAdRenderV2,
-  handleEmotionIngest,
   handleSmartAdPreview,
   handleAbImpression,
   handleAbClick,
@@ -115,6 +113,8 @@ export const app = createServer(async (request, response) => {
       return;
     }
 
+    // Smart Ads – OLD handlers (emotion/select/render) – using smartads module
+    // These handlers are deprecated in favor of the V2 handlers below
     if (request.method === "POST" && request.url === "/api/v1/smart-ads/emotion") {
       await handleSmartAdEmotion(request, response);
       return;
@@ -272,19 +272,7 @@ export const app = createServer(async (request, response) => {
       return;
     }
 
-    // ── Smart Ads ─────────────────────────────────────────────────────────────
-
-    // POST /api/v1/smart-ads/render — compose adaptive ad creative (V2 handler from smart-ads module)
-    if (request.method === "POST" && request.url === "/api/v1/smart-ads/render") {
-      await handleSmartAdRenderV2(request, response);
-      return;
-    }
-
-    // POST /api/v1/smart-ads/emotion — ingest behavioural sample
-    if (request.method === "POST" && request.url === "/api/v1/smart-ads/emotion") {
-      await handleEmotionIngest(request, response);
-      return;
-    }
+    // ── Smart Ads (V2 API) ────────────────────────────────────────────────────
 
     // GET /api/v1/smart-ads/preview — advertiser preview page
     if (request.method === "GET" && (request.url === "/api/v1/smart-ads/preview" || request.url?.startsWith("/api/v1/smart-ads/preview?"))) {
