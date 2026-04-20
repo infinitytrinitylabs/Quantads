@@ -1,8 +1,12 @@
 import { createServer, IncomingMessage, ServerResponse } from "node:http";
 import { simulateTwinAudience } from "./simulation/TwinSimulator";
+import { simulateNeuromorphicTwinAudience } from "./simulation/NeuromorphicTwinSimulator";
 import { BiddingEngine, OutcomeBidRequest } from "./bidding/BiddingEngine";
 import { createOutcomeQuote, OutcomePaymentRequest } from "./payments/x402";
-import { TwinSimulationRequest } from "./types";
+import {
+  NeuromorphicTwinSimulationRequest,
+  TwinSimulationRequest
+} from "./types";
 import { handleContextualAds } from "./routes/ads";
 import { handleSmartAdEmotion, handleSmartAdRender as handleSmartAdRenderV1, handleSmartAdSelect } from "./routes/smartads";
 import { handleAuctionBid, handleAuctionWinner } from "./routes/auctions";
@@ -460,6 +464,10 @@ export const app = createServer(async (request, response) => {
       if (!parsed.success) {
         const errors = parsed.error.issues.map((e) => `${e.path.join(".")}: ${e.message}`);
         sendJsonTimed(422, { error: "Validation failed", details: errors });
+        return;
+      }
+      if ("mode" in parsed.data && parsed.data.mode === "neuromorphic") {
+        sendJsonTimed(200, simulateNeuromorphicTwinAudience(parsed.data as NeuromorphicTwinSimulationRequest));
         return;
       }
       sendJsonTimed(200, simulateTwinAudience(parsed.data as TwinSimulationRequest));
