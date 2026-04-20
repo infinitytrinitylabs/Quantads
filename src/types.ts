@@ -97,6 +97,132 @@ export interface TwinSimulationResponse {
   }>;
 }
 
+export type SurfaceKind = "table" | "wall" | "container" | "shelf";
+
+export interface SurfaceCandidateInput {
+  kind: SurfaceKind;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  depth: number;
+  luma: number;
+  occlusion: number;
+}
+
+export interface TwinFrameInput {
+  frameId: string;
+  timestampMs: number;
+  width: number;
+  height: number;
+  candidates: SurfaceCandidateInput[];
+}
+
+export interface TwinBrandedAsset {
+  assetId: string;
+  brandName: string;
+  productName: string;
+  preferredSurface: SurfaceKind;
+  baseScale: number;
+}
+
+export interface TwinFocusEvent {
+  frameId: string;
+  timestampMs: number;
+  x: number;
+  y: number;
+  gazeIntensity: number;
+}
+
+export interface TwinAudienceSession {
+  userId: string;
+  focusEvents: TwinFocusEvent[];
+}
+
+export interface NeuromorphicTwinSimulationRequest {
+  mode: "neuromorphic";
+  campaign: {
+    id: string;
+    title: string;
+    objective?: string;
+  };
+  frames: TwinFrameInput[];
+  assets: TwinBrandedAsset[];
+  sessions: TwinAudienceSession[];
+}
+
+export interface NeuromorphicDetectedSurface {
+  surfaceId: string;
+  frameId: string;
+  kind: SurfaceKind;
+  plane: {
+    nx: number;
+    ny: number;
+    nz: number;
+    depth: number;
+  };
+  bbox: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+  lighting: {
+    luma: number;
+    temperatureKelvin: number;
+  };
+  occlusionMap: {
+    blockedRatio: number;
+    confidence: number;
+  };
+  confidence: number;
+}
+
+export interface NeuromorphicInsertion {
+  insertionId: string;
+  frameId: string;
+  surfaceId: string;
+  assetId: string;
+  transform: {
+    x: number;
+    y: number;
+    scale: number;
+    perspective: number;
+  };
+  postProcessing: {
+    grain: number;
+    motionBlur: number;
+    colorMatch: number;
+  };
+  invisibilityScore: number;
+}
+
+export interface NeuromorphicAssetEngagement {
+  assetId: string;
+  focusedMilliseconds: number;
+  weightedAttentionSeconds: number;
+  engagedUsers: number;
+}
+
+export interface NeuromorphicTwinSimulationResponse {
+  mode: "neuromorphic";
+  campaignId: string;
+  summary: {
+    analyzedFrames: number;
+    detectedSurfaces: number;
+    insertedAssets: number;
+    averageInvisibilityScore: number;
+    estimatedNativeEngagementSeconds: number;
+    highIntentUsers: number;
+  };
+  surfaces: NeuromorphicDetectedSurface[];
+  insertions: NeuromorphicInsertion[];
+  engagementByAsset: NeuromorphicAssetEngagement[];
+}
+
+export type TwinSimulationApiRequest = TwinSimulationRequest | NeuromorphicTwinSimulationRequest;
+export type TwinSimulationApiResponse = TwinSimulationResponse | NeuromorphicTwinSimulationResponse;
+
 export interface AudiencePricingSignal {
   verifiedLtv: number;
   intentScore: number;

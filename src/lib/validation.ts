@@ -237,7 +237,7 @@ export const CoordinateSchema = z.object({
   longitude: z.number().min(-180).max(180)
 });
 
-export const TwinSimulationRequestSchema = z.object({
+export const LegacyTwinSimulationRequestSchema = z.object({
   campaign: z.object({
     id: z.string().min(1),
     title: z.string().min(1),
@@ -262,6 +262,55 @@ export const TwinSimulationRequestSchema = z.object({
     quantchatOpenDelaySeconds: z.number().nonnegative().optional()
   })).min(1)
 });
+
+const SurfaceKindSchema = z.enum(["table", "wall", "container", "shelf"]);
+
+export const NeuromorphicTwinSimulationRequestSchema = z.object({
+  mode: z.literal("neuromorphic"),
+  campaign: z.object({
+    id: z.string().min(1),
+    title: z.string().min(1),
+    objective: z.string().min(1).optional()
+  }),
+  frames: z.array(z.object({
+    frameId: z.string().min(1),
+    timestampMs: z.number().int().nonnegative(),
+    width: z.number().positive(),
+    height: z.number().positive(),
+    candidates: z.array(z.object({
+      kind: SurfaceKindSchema,
+      x: z.number().nonnegative(),
+      y: z.number().nonnegative(),
+      width: z.number().positive(),
+      height: z.number().positive(),
+      depth: z.number().nonnegative(),
+      luma: z.number().min(0).max(1),
+      occlusion: z.number().min(0).max(1)
+    })).min(1)
+  })).min(1),
+  assets: z.array(z.object({
+    assetId: z.string().min(1),
+    brandName: z.string().min(1),
+    productName: z.string().min(1),
+    preferredSurface: SurfaceKindSchema,
+    baseScale: z.number().positive()
+  })).min(1),
+  sessions: z.array(z.object({
+    userId: z.string().min(1),
+    focusEvents: z.array(z.object({
+      frameId: z.string().min(1),
+      timestampMs: z.number().int().nonnegative(),
+      x: z.number().nonnegative(),
+      y: z.number().nonnegative(),
+      gazeIntensity: z.number().min(0).max(1)
+    })).min(1)
+  })).min(1)
+});
+
+export const TwinSimulationRequestSchema = z.union([
+  LegacyTwinSimulationRequestSchema,
+  NeuromorphicTwinSimulationRequestSchema
+]);
 
 // ── BCI Attention Ingest (biometric sample) ──────────────────────────────────
 
