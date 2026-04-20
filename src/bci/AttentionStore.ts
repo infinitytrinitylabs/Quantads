@@ -5,7 +5,7 @@ import { BciAttentionSignal, BciIngestionResponse } from "../types";
 // Biometric-sample AttentionStore
 //
 // Rolling 30-second window per user, ring-buffer capped at 300 samples.
-// Composite score: 0.45×eye + 0.40×neural + 0.15×normalizedHR.
+// Composite score: 0.45×eye + 0.40×neural + 0.15×normalizedHR, capped at 1.0
 // Used by the BCI attention-tracking pipeline + fraud detector.
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -107,7 +107,12 @@ export class AttentionStore {
     }
 
     // Evict samples older than WINDOW_SECONDS
-    const cutoff = new Date(sample.recordedAt).getTime() - WINDOW_SECONDS * 1000;
+    const sampleTime = new Date(sample.recordedAt).getTime();
+    if (isNaN(sampleTime)) {
+      // Reject sample with invalid timestamp
+      return window; // Return existing window without modification
+    }
+    const cutoff = sampleTime - WINDOW_SECONDS * 1000;
     window.samples = window.samples.filter((s) => {
       const timestamp = new Date(s.recordedAt).getTime();
       // Filter out samples with invalid timestamps (NaN)

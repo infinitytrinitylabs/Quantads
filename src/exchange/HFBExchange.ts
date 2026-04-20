@@ -106,7 +106,11 @@ export class HFBExchange {
     // Collect a batch
     const batch: ExchangeBid[] = [];
     for (let i = 0; i < toProcess; i++) {
-      batch.push(this.buffer[this.head]!);
+      const bid = this.buffer[this.head];
+      if (!bid) {
+        throw new Error(`Buffer corruption: missing bid at position ${this.head}`);
+      }
+      batch.push(bid);
       this.head = (this.head + 1) % this.capacity;
       this.count--;
     }

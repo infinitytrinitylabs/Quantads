@@ -246,7 +246,7 @@ export const TwinSimulationRequestSchema = z.object({
     notificationBody: z.string().min(1),
     webglOverlay: z.object({
       sceneId: z.string().min(1),
-      assetUrl: z.string().url(),
+      assetUrl: z.string().url().max(2048),
       shaderPreset: z.enum(["billboard", "portal", "lightfield"]),
       anchorMode: z.literal("world-locked"),
       ctaLabel: z.string().min(1)
@@ -303,21 +303,21 @@ export const CampaignTargetingRulesSchema = z.object({
 }).optional().default({});
 
 export const CreativeInputSchema = z.object({
-  url: z.string().url(),
+  url: z.string().url().max(2048),
   format: z.enum(["banner", "video", "native"]),
-  previewUrl: z.string().url().optional()
+  previewUrl: z.string().url().max(2048).optional()
 });
 
 export const CampaignCreateRequestSchema = z.object({
   name: z.string().min(1).max(256),
-  budget: z.number().positive(),
+  budget: z.number().min(0.01), // Minimum $0.01 budget
   targetingRules: CampaignTargetingRulesSchema,
   creatives: z.array(CreativeInputSchema).optional().default([])
 });
 
 export const CampaignUpdateRequestSchema = z.object({
   name: z.string().min(1).max(256).optional(),
-  budget: z.number().positive().optional(),
+  budget: z.number().min(0.01).optional(), // Minimum $0.01 budget
   status: z.enum(["active", "paused"]).optional(),
   targetingRules: CampaignTargetingRulesSchema
 });
@@ -405,8 +405,8 @@ const SmartProductSchema = z.object({
   currency: z.string().regex(/^[A-Za-z]{3,5}$/).optional(),
   offerHeadline: z.string().min(1).max(256).optional(),
   offerBody: z.string().min(1).max(512).optional(),
-  destinationUrl: z.string().url(),
-  imageUrl: z.string().url().optional(),
+  destinationUrl: z.string().url().max(2048),
+  imageUrl: z.string().url().max(2048).optional(),
   valueProps: z.array(z.string().min(1).max(140)).min(1).max(6),
   proofPoints: z.array(z.string().min(1).max(180)).min(1).max(6),
   badges: z.array(z.string().min(1).max(80)).max(6).optional()

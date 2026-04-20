@@ -57,7 +57,7 @@ export const percentile = (values: number[], ratio: number): number => {
 
   const sorted = [...values].sort((left, right) => left - right);
   const index = clamp(Math.floor((sorted.length - 1) * ratio), 0, sorted.length - 1);
-  return sorted[index];
+  return sorted[index]!; // Non-null assertion safe after length check
 };
 
 export const boundedRatio = (numerator: number, denominator: number): number => {
@@ -77,10 +77,11 @@ export const bucketTimestamp = (timestamp: string, granularity: "minute" | "hour
     return nowIso();
   }
 
+  // Work in UTC to avoid timezone issues during DST transitions
   if (granularity === "hour") {
-    date.setMinutes(0, 0, 0);
+    date.setUTCMinutes(0, 0, 0);
   } else {
-    date.setSeconds(0, 0);
+    date.setUTCSeconds(0, 0);
   }
 
   return date.toISOString();

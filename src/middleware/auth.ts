@@ -11,7 +11,16 @@ export interface QuantmailToken {
 }
 
 const QUANTMAIL_ISSUER = "quantmail";
-const JWT_SECRET = process.env["QUANTMAIL_JWT_SECRET"] ?? "dev-secret-change-in-production";
+const JWT_SECRET = (() => {
+  const secret = process.env["QUANTMAIL_JWT_SECRET"];
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("QUANTMAIL_JWT_SECRET must be set in production environment");
+    }
+    return "dev-secret-change-in-production";
+  }
+  return secret;
+})();
 
 /** Extracts and verifies the Quantmail Bearer JWT from the Authorization header.
  *  Returns the decoded token payload or throws on failure. */
