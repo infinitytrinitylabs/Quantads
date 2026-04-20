@@ -22,7 +22,9 @@ export function simulateTwinAudience(request: TwinSimulationRequest): TwinSimula
     let quantchatBonusEligible = false;
 
     member.route.some((coordinate, index) => {
-      const occurredAt = new Date(Date.UTC(2026, 0, 1, 0, 0, index)).toISOString();
+      // Create timestamp with proper second offset for each route point
+      const baseTimestamp = Date.UTC(2026, 0, 1, 0, 0, 0);
+      const occurredAt = new Date(baseTimestamp + index * 1000).toISOString();
       const encounter = evaluateEncounter(request.campaign, toLocationEvent(member.userId, coordinate, occurredAt));
 
       if (!encounter.triggered || !encounter.notification) {

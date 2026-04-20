@@ -98,7 +98,7 @@ const makeRequest = (): SmartAdRequest => ({
   }
 });
 
-test("POST /api/v1/smart-ads/emotion returns inferred emotion with auth", async () => {
+test("POST /api/v1/smartads/emotion returns inferred emotion with auth", async () => {
   bciAttentionStore.ingest({
     userId: "smart-api-user",
     sessionId: "smart-session-1",
@@ -116,7 +116,7 @@ test("POST /api/v1/smart-ads/emotion returns inferred emotion with auth", async 
     const address = server.address();
     if (!address || typeof address === "string") throw new Error("Expected numeric port");
 
-    const response = await fetch(`http://127.0.0.1:${address.port}/api/v1/smart-ads/emotion`, {
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/v1/smartads/emotion`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -141,7 +141,7 @@ test("POST /api/v1/smart-ads/emotion returns inferred emotion with auth", async 
   }
 });
 
-test("POST /api/v1/smart-ads/select chooses a creative and returns ranked options", async () => {
+test("POST /api/v1/smartads/select chooses a creative and returns ranked options", async () => {
   const server = app.listen(0);
   await once(server, "listening");
 
@@ -149,7 +149,7 @@ test("POST /api/v1/smart-ads/select chooses a creative and returns ranked option
     const address = server.address();
     if (!address || typeof address === "string") throw new Error("Expected numeric port");
 
-    const response = await fetch(`http://127.0.0.1:${address.port}/api/v1/smart-ads/select`, {
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/v1/smartads/select`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -180,7 +180,7 @@ test("POST /api/v1/smart-ads/select chooses a creative and returns ranked option
   }
 });
 
-test("POST /api/v1/smart-ads/render returns composition and render model", async () => {
+test("POST /api/v1/smartads/render returns composition and render model", async () => {
   const server = app.listen(0);
   await once(server, "listening");
 
@@ -188,7 +188,7 @@ test("POST /api/v1/smart-ads/render returns composition and render model", async
     const address = server.address();
     if (!address || typeof address === "string") throw new Error("Expected numeric port");
 
-    const response = await fetch(`http://127.0.0.1:${address.port}/api/v1/smart-ads/render`, {
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/v1/smartads/render`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -238,7 +238,7 @@ test("POST /api/v1/smart-ads/render rejects invalid payloads", async () => {
     const address = server.address();
     if (!address || typeof address === "string") throw new Error("Expected numeric port");
 
-    const response = await fetch(`http://127.0.0.1:${address.port}/api/v1/smart-ads/render`, {
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/v1/smartads/render`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -268,7 +268,7 @@ test("POST /api/v1/smart-ads/select requires auth", async () => {
     const address = server.address();
     if (!address || typeof address === "string") throw new Error("Expected numeric port");
 
-    const response = await fetch(`http://127.0.0.1:${address.port}/api/v1/smart-ads/select`, {
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/v1/smartads/select`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(makeRequest())

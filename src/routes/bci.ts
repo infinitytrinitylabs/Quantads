@@ -95,7 +95,8 @@ export const handleBciIngest = withAuth(async (req: IncomingMessage, res: Server
     return;
   }
 
-  const signal = parsed.data as BciAttentionSignal;
+  // Use validated data directly from Zod - no unsafe cast needed
+  const signal = parsed.data;
   logger.info(
     { sessionId: signal.sessionId, platform: signal.platform },
     "BCI attention signal ingested"

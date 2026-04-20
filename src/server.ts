@@ -4,7 +4,7 @@ import { BiddingEngine, OutcomeBidRequest } from "./bidding/BiddingEngine";
 import { createOutcomeQuote, OutcomePaymentRequest } from "./payments/x402";
 import { TwinSimulationRequest } from "./types";
 import { handleContextualAds } from "./routes/ads";
-import { handleSmartAdEmotion, handleSmartAdRender, handleSmartAdSelect } from "./routes/smartads";
+import { handleSmartAdEmotion, handleSmartAdRender as handleSmartAdRenderV1, handleSmartAdSelect } from "./routes/smartads";
 import { handleAuctionBid, handleAuctionWinner } from "./routes/auctions";
 import { handleCampaignAnalytics, handleRoiSummary } from "./routes/analytics";
 import {
@@ -20,12 +20,12 @@ import { handleOutcomeLookup, handleOutcomeReport } from "./routes/outcomes";
 import { handleBciIngest, handleBciAggregated } from "./routes/bci";
 import { handleDashboardStream } from "./routes/dashboard";
 import {
-  handleSmartAdRender as handleSmartAdRenderV2,
-  handleEmotionIngest,
   handleSmartAdPreview,
   handleAbImpression,
   handleAbClick,
-  handleAbMetrics
+  handleAbMetrics,
+  handleSmartAdRender as handleSmartAdRenderV2,
+  handleEmotionIngest
 } from "./routes/smart-ads";
 import {
   handleTickerPublish,
@@ -115,18 +115,34 @@ export const app = createServer(async (request, response) => {
       return;
     }
 
+    // ── Smart Ads (V2 - routes/smart-ads.ts) ─────────────────────────────────
+
+    // POST /api/v1/smart-ads/render — compose adaptive ad creative (V2 handler)
+    if (request.method === "POST" && request.url === "/api/v1/smart-ads/render") {
+      await handleSmartAdRenderV2(request, response);
+      return;
+    }
+
+    // POST /api/v1/smart-ads/emotion — ingest behavioural sample (V2 handler)
     if (request.method === "POST" && request.url === "/api/v1/smart-ads/emotion") {
+      await handleEmotionIngest(request, response);
+      return;
+    }
+
+    // Smart Ads (V1 - routes/smartads.ts) - Alternative API using smartads module
+    // Uses different endpoints (/smartads/) to avoid conflicts with V2 API (/smart-ads/)
+    if (request.method === "POST" && request.url === "/api/v1/smartads/emotion") {
       await handleSmartAdEmotion(request, response);
       return;
     }
 
-    if (request.method === "POST" && request.url === "/api/v1/smart-ads/select") {
+    if (request.method === "POST" && request.url === "/api/v1/smartads/select") {
       await handleSmartAdSelect(request, response);
       return;
     }
 
-    if (request.method === "POST" && request.url === "/api/v1/smart-ads/render") {
-      await handleSmartAdRender(request, response);
+    if (request.method === "POST" && request.url === "/api/v1/smartads/render") {
+      await handleSmartAdRenderV1(request, response);
       return;
     }
 
@@ -272,19 +288,7 @@ export const app = createServer(async (request, response) => {
       return;
     }
 
-    // ── Smart Ads ─────────────────────────────────────────────────────────────
-
-    // POST /api/v1/smart-ads/render — compose adaptive ad creative (V2 handler from smart-ads module)
-    if (request.method === "POST" && request.url === "/api/v1/smart-ads/render") {
-      await handleSmartAdRenderV2(request, response);
-      return;
-    }
-
-    // POST /api/v1/smart-ads/emotion — ingest behavioural sample
-    if (request.method === "POST" && request.url === "/api/v1/smart-ads/emotion") {
-      await handleEmotionIngest(request, response);
-      return;
-    }
+    // ── Smart Ads (V2 API) ────────────────────────────────────────────────────
 
     // GET /api/v1/smart-ads/preview — advertiser preview page
     if (request.method === "GET" && (request.url === "/api/v1/smart-ads/preview" || request.url?.startsWith("/api/v1/smart-ads/preview?"))) {

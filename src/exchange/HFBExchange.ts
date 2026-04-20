@@ -137,9 +137,11 @@ export class HFBExchange {
       // Sort descending by effectiveCpc
       effective.sort((a, b) => b.effectiveCpc - a.effectiveCpc);
 
-      // Vickrey: winner pays the second-highest price (or own price if sole bidder)
+      // Vickrey: winner pays the second-highest price, or floor price if sole bidder
       const winnerEffective = effective[0]?.effectiveCpc ?? 0;
-      const secondEffective = effective[1]?.effectiveCpc ?? winnerEffective;
+      const secondEffective = effective.length > 1
+        ? (effective[1]?.effectiveCpc ?? 0)
+        : Math.max(winnerEffective * 0.5, 0.01); // Floor price: 50% of bid or $0.01, whichever is higher
 
       for (let idx = 0; idx < effective.length; idx++) {
         const { bid, multiplier, effectiveCpc } = effective[idx]!;

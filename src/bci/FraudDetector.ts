@@ -85,10 +85,15 @@ export function detectFraud(samples: BiometricSample[]): FraudAnalysis {
 
   // ── 3. Impossible heart-rate delta between consecutive samples ─────────────
   for (let i = 1; i < samples.length; i++) {
-    const delta = Math.abs((samples[i]?.heartRate ?? 0) - (samples[i - 1]?.heartRate ?? 0));
-    if (delta > MAX_HR_DELTA_PER_SAMPLE) {
-      flags.push(`impossible-hr-delta:${delta}bpm`);
-      fraudScore = Math.max(fraudScore, 0.85);
+    const currentHr = samples[i]?.heartRate;
+    const prevHr = samples[i - 1]?.heartRate;
+    // Only check delta if both samples have valid heart rate data
+    if (currentHr !== undefined && prevHr !== undefined && currentHr > 0 && prevHr > 0) {
+      const delta = Math.abs(currentHr - prevHr);
+      if (delta > MAX_HR_DELTA_PER_SAMPLE) {
+        flags.push(`impossible-hr-delta:${delta}bpm`);
+        fraudScore = Math.max(fraudScore, 0.85);
+      }
     }
   }
 
