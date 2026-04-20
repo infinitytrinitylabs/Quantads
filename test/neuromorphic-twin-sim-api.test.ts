@@ -61,14 +61,14 @@ test("POST /api/v1/twin-sim supports neuromorphic surface, insertion, and engage
       assets: [
         {
           assetId: "asset-coffee-cup",
-          brandName: "QuantBrew",
+          brandName: "Quantbrew",
           productName: "Aurora Latte Cup",
           preferredSurface: "table",
           baseScale: 1
         },
         {
           assetId: "asset-neon-sign",
-          brandName: "QuantBrew",
+          brandName: "Quantbrew",
           productName: "Ambient Wall Logo",
           preferredSurface: "wall",
           baseScale: 1.3
