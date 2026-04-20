@@ -36,6 +36,14 @@ interface YieldDashOptions {
   hasAuthorizationHeader: boolean;
 }
 
+const safeScriptJson = (value: unknown): string =>
+  JSON.stringify(value)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+
 export const getYieldDashHtml = ({ dashboard, hasAuthorizationHeader }: YieldDashOptions): string => {
 
   return `<!DOCTYPE html>
@@ -211,7 +219,7 @@ export const getYieldDashHtml = ({ dashboard, hasAuthorizationHeader }: YieldDas
       </section>
     </main>
     <script>
-      const snapshot = ${JSON.stringify(dashboard)};
+      const snapshot = ${safeScriptJson(dashboard)};
       const summaryGrid = document.getElementById("summary-grid");
       const leaderboardBody = document.getElementById("leaderboard-body");
       const formatBody = document.getElementById("format-body");

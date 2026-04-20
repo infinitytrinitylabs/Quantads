@@ -134,7 +134,7 @@ const formatCompatibility = (
 
 const attentionFit = (creativeStyle: YieldCreativeStyle, pulse: PulseSnapshot, bid: DspBid): number => {
   const normalizedDwell = clamp(pulse.dwellTimeMs / 20_000, 0, 1.2);
-  const attentionAffinity = clamp(bid.attentionAffinity ?? 0.75, 0, 1.25);
+  const attentionAffinity = clamp(bid.attentionAffinity ?? 0.75, 0, 1);
   const lowCognitiveLoad = 1 - clamp(pulse.cognitiveLoad, 0, 1);
   const lowScrollVelocity = 1 - clamp(pulse.scrollVelocity, 0, 1.5) / 1.5;
 
@@ -142,6 +142,8 @@ const attentionFit = (creativeStyle: YieldCreativeStyle, pulse: PulseSnapshot, b
   // the monetization thesis: narrative ads need dwell + available attention, native
   // cards need stable browsing posture, and micro-burst / rewarded creatives remain
   // viable in higher-load moments because they monetize brief interruptible windows.
+  // Each style keeps a 1.0 total weight but shifts emphasis toward the signals that
+  // historically matter most for that delivery pattern.
   const styleScore: Record<YieldCreativeStyle, number> = {
     "micro-burst": 0.45 * pulse.attentionDepth + 0.2 * pulse.eyeAlignment + 0.2 * pulse.cognitiveLoad + 0.15 * lowScrollVelocity,
     narrative: 0.4 * pulse.attentionDepth + 0.25 * normalizedDwell + 0.2 * lowCognitiveLoad + 0.15 * pulse.eyeAlignment,
@@ -195,7 +197,7 @@ export class BidAggregator {
       request.slot.preferredCreativeStyle
     );
     const fit = attentionFit(bid.creativeStyle, request.pulse, bid);
-    const quality = clamp(bid.qualityScore, 0.3, 1.1);
+    const quality = clamp(bid.qualityScore, 0.3, 1);
     const viewabilityLift = clamp(0.75 + request.slot.viewabilityEstimate * 0.45, 0.75, 1.2);
     const effectiveCpm = timedOut
       ? 0
